@@ -23,14 +23,15 @@
     ]
   },
   "scripts": {
-    "build": "pika build"
+    "build": "pika build",
+    "lint": "eslint src/**/*.js"
   },
   "dependencies": {},
   "devDependencies": {
     "@pika/pack": "^0.5.0",
-    "@pika/plugin-build-node": "^0.6.0",
-    "@pika/plugin-simple-bin": "^0.6.0",
-    "@pika/plugin-standard-pkg": "^0.6.0",
+    "@pika/plugin-build-node": "^0.6.1",
+    "@pika/plugin-simple-bin": "^0.6.1",
+    "@pika/plugin-standard-pkg": "^0.6.1",
     "eslint": "^6.4.0"
   }
 }

@@ -721,10 +721,10 @@
     validate-npm-package-license "^3.0.4"
     yargs-parser "^13.1.1"
 
-"@pika/plugin-build-node@^0.6.0":
-  version "0.6.0"
-  resolved "https://registry.yarnpkg.com/@pika/plugin-build-node/-/plugin-build-node-0.6.0.tgz#d1f7a5c3851e31a28c9340589787f5c1bf1fe399"
-  integrity sha512-9s9TN6I7P+XJLBhoT9WV8zUUZDE2tCOfquNlP5UJVnJEOrf2b2AsVc5sxQNIIkTVUmH5z8w1D7IucL+cXCrWag==
+"@pika/plugin-build-node@^0.6.1":
+  version "0.6.1"
+  resolved "https://registry.npmjs.org/@pika/plugin-build-node/-/plugin-build-node-0.6.1.tgz#6725099237b0d534699e02052c03ddc71a8d4904"
+  integrity sha512-a7lo/KIszmGU6np1/1S7JM28qhE5pJ0ec+Ed7TG0+gYQE6Mh3OHEpWetsncLnZ/hDpeSmzqw+TUz0HkzGhUEPw==
   dependencies:
     "@babel/core" "^7.0.0"
     "@babel/plugin-syntax-dynamic-import" "^7.2.0"
@@ -735,15 +735,15 @@
     rollup "^1.1.0"
     rollup-plugin-babel "^4.3.0"
 
-"@pika/plugin-simple-bin@^0.6.0":
-  version "0.6.0"
-  resolved "https://registry.yarnpkg.com/@pika/plugin-simple-bin/-/plugin-simple-bin-0.6.0.tgz#676d612770ba8a07a3166ad1b0256a47b9f7e2ab"
-  integrity sha512-uZKVzT/k1hVCYuaWSuK+t7z99FQ087sTtZ5OrQay6430MTiloghrTqo+oySryrqF8SWDUU4iioKhGyvEKOCVWw==
+"@pika/plugin-simple-bin@^0.6.1":
+  version "0.6.1"
+  resolved "https://registry.npmjs.org/@pika/plugin-simple-bin/-/plugin-simple-bin-0.6.1.tgz#be7ceb57b422832be162375d60608956afcd3a25"
+  integrity sha512-U3pnogMULWZaOZJ6wAfQUulyCVU9ETTKe+u2jeYb+01i8A494tKj2az93hVohHiky/6AINl6Ugublak66X8uFQ==
 
-"@pika/plugin-standard-pkg@^0.6.0":
-  version "0.6.0"
-  resolved "https://registry.yarnpkg.com/@pika/plugin-standard-pkg/-/plugin-standard-pkg-0.6.0.tgz#d0dcc4e08d48d2ed100d93bcd6bc829d4713c9c9"
-  integrity sha512-YIM4CWYx0XzVciqIu1qgkUVZQ9tsZOCaEd9szUh29yobHHRFw+HsRaJUgOCXdoRp5R/Zx5CXTGTbJ0Zd9I3S8Q==
+"@pika/plugin-standard-pkg@^0.6.1":
+  version "0.6.1"
+  resolved "https://registry.npmjs.org/@pika/plugin-standard-pkg/-/plugin-standard-pkg-0.6.1.tgz#85111790519bd2916769cbc2eb7dd87cab2d3c0a"
+  integrity sha512-ulcli/3LQIimDYy5ZD0+VwbVLdY+MtbnCJ6eY6IiYHf0a+qXAfoszIVPbr7eQFfZRwddY45OrF3HDuYHnhj2PA==
   dependencies:
     "@types/node" "^10.12.18"
     standard-pkg "^0.4.0"
