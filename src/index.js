@@ -2,7 +2,7 @@ const fs = require('fs')
 const path = require('path')
 const appRootPath = process.cwd()
 
-if (!fs.dirExistsSync(`${appRootPath}/package.json`)) {
+if (!fs.existsSync(`${appRootPath}/package.json`)) {
   console.error('Please run from the root of your npm project')
   console.error('No package.json found!!')
   process.exit(1)
