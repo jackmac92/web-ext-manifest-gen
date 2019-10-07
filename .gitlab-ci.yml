@@ -8,9 +8,6 @@ include:
   - project: 'dropLoop/ci-templates'
     ref: master
     file: 'node/dependencies.yml'
-  - project: 'dropLoop/ci-templates'
-    ref: master
-    file: 'node/typescript.yml'
 
 stages:
   - test
