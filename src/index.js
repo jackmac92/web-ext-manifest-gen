@@ -47,32 +47,36 @@ const autoGenContentScripts = contentScriptsDir =>
     return { matches, js: `./${scriptPath}` }
   })
 
-module.exports.run = () => {
-  const {
-    name: pkgName,
-    version,
-    description
-  } = require(`${appRootPath}/package.json`)
-  const argv = require('yargs')
-    .usage('Usage: $0 -s [injectScriptsDir], -p [permission]')
-    .demandOption(['s']).argv
-  const injectScriptsDir = argv.s
-  console.log(`Looking in ${injectScriptsDir} for web-ext content scripts`)
-  fs.writeFileSync(
-    `${appRootPath}/manifest.json`,
-    JSON.stringify(
-      {
-        name: pkgName,
-        version,
-        description,
-        manifest_version: 2,
-        permissions: ['activeTab'],
-        content_scripts: autoGenContentScripts(injectScriptsDir)
-      },
-      null,
-      4
-    )
-  )
-
-  console.log('Wrote Manifest Successfully')
-}
+module.exports.run = () =>
+  new Promise((resolve, reject) => {
+    const {
+      name: pkgName,
+      version,
+      description
+    } = require(`${appRootPath}/package.json`)
+    const argv = require('yargs')
+      .usage('Usage: $0 -s [injectScriptsDir], -p [permission]')
+      .demandOption(['s']).argv
+    const injectScriptsDir = argv.s
+    console.log(`Looking in ${injectScriptsDir} for web-ext content scripts`)
+    try {
+      fs.writeFileSync(
+        `${appRootPath}/manifest.json`,
+        JSON.stringify(
+          {
+            name: pkgName,
+            version,
+            description,
+            manifest_version: 2,
+            permissions: ['activeTab'],
+            content_scripts: autoGenContentScripts(injectScriptsDir)
+          },
+          null,
+          4
+        )
+      )
+    } catch (e) {
+      reject(e)
+    }
+    resolve()
+  })
