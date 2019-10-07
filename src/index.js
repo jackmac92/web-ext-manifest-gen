@@ -54,7 +54,7 @@ module.exports.run = () => {
         description,
         manifest_version: 2,
         permissions: process.env.WEB_EXT_PERMISSIONS,
-        content_scripts: autoGenContentScripts()
+        content_scripts: autoGenContentScripts(injectScriptsDir)
       },
       null,
       4
