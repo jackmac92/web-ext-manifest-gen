@@ -36,7 +36,7 @@
     "@pika/plugin-simple-bin": "^0.6.1",
     "@pika/plugin-standard-pkg": "^0.6.1",
     "commitlint": "^8.1.0",
-    "eslint": "^6.4.0"
+    "eslint": "^6.5.1"
   },
   "commitlint": {
     "extends": [
