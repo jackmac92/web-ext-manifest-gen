@@ -1,5 +1,9 @@
 const fs = require('fs')
 const path = require('path')
+const argv = require('yargs')
+  .usage('Usage: $0 -s [injectScriptsDir], -p [permission]')
+  .demandOption(['s']).argv
+
 const appRootPath = process.cwd()
 
 if (!fs.existsSync(`${appRootPath}/package.json`)) {
@@ -46,7 +50,7 @@ const autoGenContentScripts = contentScriptsDir =>
     return { matches, js: `./${scriptPath}` }
   })
 
-const injectScriptsDir = './src/injectedScripts'
+const injectScriptsDir = argv.s
 
 console.log(`Looking in ${injectScriptsDir} for web-ext content scripts`)
 
@@ -64,7 +68,7 @@ module.exports.run = () => {
         version,
         description,
         manifest_version: 2,
-        permissions: process.env.WEB_EXT_PERMISSIONS,
+        permissions: ['activeTab'],
         content_scripts: autoGenContentScripts(injectScriptsDir)
       },
       null,
