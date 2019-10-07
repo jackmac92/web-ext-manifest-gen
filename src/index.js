@@ -54,9 +54,17 @@ module.exports.run = () =>
       description
     } = require(`${appRootPath}/package.json`)
     const argv = require('yargs')
-      .usage('Usage: $0 -s [injectScriptsDir], -p [permission]')
-      .demandOption(['s']).argv
-    const injectScriptsDir = argv.s
+      .usage('Usage: $0 -s [injectScriptsDir] -p [permission]')
+      .option('scripts', {
+        alias: 's',
+        describe: 'path to content scripts'
+      })
+      .option('permission', {
+        alias: 'p',
+        describe: 'UNUSED permission to include in manifest'
+      })
+      .demandOption(['scripts']).argv
+    const injectScriptsDir = argv.scripts
     console.log(`Looking in ${injectScriptsDir} for web-ext content scripts`)
     try {
       fs.writeFileSync(
