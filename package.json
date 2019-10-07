@@ -1,5 +1,5 @@
 {
-  "name": "pika-pack-template",
+  "name": "web-ext-manifest-gen",
   "version": "0.0.1",
   "@pika/pack": {
     "pipeline": [
