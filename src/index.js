@@ -1,8 +1,5 @@
 const fs = require('fs')
 const path = require('path')
-const argv = require('yargs')
-  .usage('Usage: $0 -s [injectScriptsDir], -p [permission]')
-  .demandOption(['s']).argv
 
 const appRootPath = process.cwd()
 
@@ -50,16 +47,17 @@ const autoGenContentScripts = contentScriptsDir =>
     return { matches, js: `./${scriptPath}` }
   })
 
-const injectScriptsDir = argv.s
-
-console.log(`Looking in ${injectScriptsDir} for web-ext content scripts`)
-
 module.exports.run = () => {
   const {
     name: pkgName,
     version,
     description
   } = require(`${appRootPath}/package.json`)
+  const argv = require('yargs')
+    .usage('Usage: $0 -s [injectScriptsDir], -p [permission]')
+    .demandOption(['s']).argv
+  const injectScriptsDir = argv.s
+  console.log(`Looking in ${injectScriptsDir} for web-ext content scripts`)
   fs.writeFileSync(
     `${appRootPath}/manifest.json`,
     JSON.stringify(
