@@ -838,7 +838,7 @@
 
 "@pika/pack@^0.5.0":
   version "0.5.0"
-  resolved "https://registry.yarnpkg.com/@pika/pack/-/pack-0.5.0.tgz#d6b18c1b2cc27675b80bce37747373a12ff5afdc"
+  resolved "https://registry.npmjs.org/@pika/pack/-/pack-0.5.0.tgz#d6b18c1b2cc27675b80bce37747373a12ff5afdc"
   integrity sha512-ernb1SHzvk1Mfi8pBVRAaCKtavz80IiIXG5kOuHsM9+ICxspypR6f7kdFWvglJjVhhdBrYSnecFK7W28fZCXjQ==
   dependencies:
     "@pika/cli" latest
