@@ -1,5 +1,6 @@
 const fs = require('fs')
 const path = require('path')
+const appRootPath = require('app-root-path')
 
 const isCodeFile = file =>
   ['.js', '.ts', '.jsx', '.tsx'].some(ext => file.endsWith(ext))
@@ -44,9 +45,13 @@ const injectScriptsDir = './src/injectedScripts'
 console.log(`Looking in ${injectScriptsDir} for web-ext content scripts`)
 
 module.exports.run = () => {
-  const { name: pkgName, version, description } = require('./package.json')
+  const {
+    name: pkgName,
+    version,
+    description
+  } = require(`${appRootPath}/package.json`)
   fs.writeFileSync(
-    './manifest.json',
+    `${appRootPath}/manifest.json`,
     JSON.stringify(
       {
         name: pkgName,
