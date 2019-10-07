@@ -1,6 +1,12 @@
 const fs = require('fs')
 const path = require('path')
-const appRootPath = require('app-root-path')
+const appRootPath = process.cwd()
+
+if (!fs.dirExistsSync(`${appRootPath}/package.json`)) {
+  console.error('Please run from the root of your npm project')
+  console.error('No package.json found!!')
+  process.exit(1)
+}
 
 const isCodeFile = file =>
   ['.js', '.ts', '.jsx', '.tsx'].some(ext => file.endsWith(ext))
