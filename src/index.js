@@ -38,7 +38,7 @@ const autoGenContentScripts = contentScriptsDir =>
   listFiles(contentScriptsDir).map(s => {
     const scriptPath = path.join(contentScriptsDir, s)
     const matches = getUrlMatches(scriptPath)
-    return { matches, js: `./${scriptPath}` }
+    return { matches, js: [`./${scriptPath}`] }
   })
 
 module.exports.run = () =>
