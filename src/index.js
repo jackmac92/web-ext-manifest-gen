@@ -1,4 +1,13 @@
-module.exports.run = function run(argv) {
+function main(argz) {
+  return Promise.resolve().then(() => {
+    console.log('Hello world!')
+    console.dir(argz)
+  })
+}
+
+module.exports.main = main
+
+function getArgs(argv) {
   const args = require('yargs/yargs')(argv.slice(2))
     .command('execute [action]', 'execute specified action', yargs => {
       yargs.positional('action', {
@@ -15,3 +24,7 @@ module.exports.run = function run(argv) {
 
   return Promise.resolve(args)
 }
+
+module.exports.getArgs = getArgs
+
+module.exports.run = (...args) => getArgs(args).then(main)
