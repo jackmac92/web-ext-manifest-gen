@@ -87,6 +87,7 @@ module.exports.run = () =>
       })
       .demandOption(['scripts']).argv
     const easilyOverridableDefaults = {
+      permissions: [],
       optional_permissions: [],
       version,
       description
