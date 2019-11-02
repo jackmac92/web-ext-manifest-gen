@@ -54,7 +54,6 @@ module.exports.run = () =>
       description
     } = require(`${appRootPath}/package.json`)
     // TODO copy autogen permissions setup from that rollup lib
-    // TODO handle optional permissions
     // TODO handle content_security_policy
     // TODO handle icons
     // handle browser actions
@@ -76,21 +75,34 @@ module.exports.run = () =>
         type: 'array',
         describe: 'path to background file, multiple entries allowed'
       })
-      .option('permission', {
+      .option('permissions', {
         alias: 'p',
-        describe: 'permission to include in manifest'
+        type: 'array',
+        describe: 'permissions to include in manifest',
+        default: ['activeTab']
+      })
+      .option('optionalPermissions', {
+        type: 'array',
+        describe: 'optional-permissions to include in manifest'
       })
       .demandOption(['scripts']).argv
+    const easilyOverridableDefaults = {
+      optional_permissions: [],
+      version,
+      description
+    }
     const injectScriptsDir = argv.scripts
     const manifestBase = JSON.parse(fs.readFileSync(argv.template)) || {}
-    const manifest = Object.assign({}, manifestBase, {
-      name: pkgName,
-      version,
-      description,
-      manifest_version: 2,
-      permissions: ['activeTab'],
-      content_scripts: autoGenContentScripts(injectScriptsDir)
-    })
+    const manifest = Object.assign(
+      {},
+      easilyOverridableDefaults,
+      manifestBase,
+      {
+        manifest_version: 2,
+        name: pkgName,
+        content_scripts: autoGenContentScripts(injectScriptsDir)
+      }
+    )
     if (argv.devTools) {
       manifest.devtools_page = argv.devTools
     }
@@ -100,9 +112,20 @@ module.exports.run = () =>
         persistent: true
       }
     }
-    if (argv.permissions) {
-      throw Error('permissions flag is UNIMPLEMENTED (whoopsie)')
+    if (argv.optionalPermissions) {
+      argv.optionalPermissions.forEach(perm => {
+        if (!manifest['optional_permissions'].includes(perm)) {
+          manifest['optional_permissions'].push(perm)
+        }
+      })
     }
+
+    argv.permissions.forEach(perm => {
+      if (!manifest.permissions.includes(perm)) {
+        manifest.permissions.push(perm)
+      }
+    })
+
     try {
       fs.writeFileSync(
         `${appRootPath}/manifest.json`,
