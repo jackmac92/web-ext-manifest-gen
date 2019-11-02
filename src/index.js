@@ -59,28 +59,40 @@ module.exports.run = () =>
         alias: 's',
         describe: 'path to content scripts'
       })
+      .option('devTools', {
+        alias: 't',
+        describe: 'path to dev-tools html'
+      })
+      .option('base', {
+        alias: 'b',
+        describe:
+          'path to an existing manifest file which should be used for supplementary keys (will be overriden)'
+      })
       .option('permission', {
         alias: 'p',
-        describe: 'UNUSED permission to include in manifest'
+        describe: 'permission to include in manifest'
       })
       .demandOption(['scripts']).argv
     const injectScriptsDir = argv.scripts
-    console.log(`Looking in ${injectScriptsDir} for web-ext content scripts`)
+    const manifestBase = argv.base ? require(argv.base) : {}
+    const manifest = Object.assign({}, manifestBase, {
+      name: pkgName,
+      version,
+      description,
+      manifest_version: 2,
+      permissions: ['activeTab'],
+      content_scripts: autoGenContentScripts(injectScriptsDir)
+    })
+    if (argv.devTools) {
+      manifest.devtools_page = argv.devTools
+    }
+    if (argv.permissions) {
+      throw Error('permissions flag is UNIMPLEMENTED (whoopsie)')
+    }
     try {
       fs.writeFileSync(
         `${appRootPath}/manifest.json`,
-        JSON.stringify(
-          {
-            name: pkgName,
-            version,
-            description,
-            manifest_version: 2,
-            permissions: ['activeTab'],
-            content_scripts: autoGenContentScripts(injectScriptsDir)
-          },
-          null,
-          4
-        )
+        JSON.stringify(manifest, null, 4)
       )
     } catch (e) {
       reject(e)
