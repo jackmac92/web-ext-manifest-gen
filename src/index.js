@@ -53,6 +53,11 @@ module.exports.run = () =>
       version,
       description
     } = require(`${appRootPath}/package.json`)
+    // TODO copy autogen permissions setup from that rollup lib
+    // TODO handle optional permissions
+    // TODO handle content_security_policy
+    // TODO handle icons
+    // handle browser actions
     const argv = require('yargs')
       .usage('Usage: $0 -s [injectScriptsDir] -p [permission]')
       .option('scripts', {
@@ -60,13 +65,16 @@ module.exports.run = () =>
         describe: 'path to content scripts'
       })
       .option('devTools', {
-        alias: 't',
         describe: 'path to dev-tools html'
       })
-      .option('base', {
-        alias: 'b',
+      .option('template', {
+        alias: 't',
         describe:
           'path to an existing manifest file which should be used for supplementary keys (will be overriden)'
+      })
+      .option('backgroundScripts', {
+        type: 'array',
+        describe: 'path to background file, multiple entries allowed'
       })
       .option('permission', {
         alias: 'p',
@@ -85,6 +93,12 @@ module.exports.run = () =>
     })
     if (argv.devTools) {
       manifest.devtools_page = argv.devTools
+    }
+    if (argv.backgroundScripts) {
+      manifest.background = {
+        scripts: argv.backgroundScripts,
+        persistent: true
+      }
     }
     if (argv.permissions) {
       throw Error('permissions flag is UNIMPLEMENTED (whoopsie)')
