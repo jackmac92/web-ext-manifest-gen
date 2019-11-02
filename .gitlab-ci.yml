@@ -13,8 +13,7 @@ include:
     file: 'node/core.yml'
 
 stages:
-  - zero
+  - meta
   - test
   - build
   - publish
-  - meta
