@@ -24,6 +24,7 @@
   },
   "scripts": {
     "build": "pika build",
+    "test": "echo 'Hopefully it works'",
     "lint": "eslint src/**/*.js"
   },
   "dependencies": {
