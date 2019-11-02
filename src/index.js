@@ -82,7 +82,7 @@ module.exports.run = () =>
       })
       .demandOption(['scripts']).argv
     const injectScriptsDir = argv.scripts
-    const manifestBase = argv.base ? require(argv.base) : {}
+    const manifestBase = JSON.parse(fs.readFileSync(argv.template)) || {}
     const manifest = Object.assign({}, manifestBase, {
       name: pkgName,
       version,
