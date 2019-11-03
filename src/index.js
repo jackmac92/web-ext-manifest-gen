@@ -74,6 +74,10 @@ module.exports.run = () =>
         type: 'array',
         describe: 'path to background file, multiple entries allowed'
       })
+      .option('locale', {
+        describe: 'path to background file, multiple entries allowed',
+        default: 'en'
+      })
       .option('permissions', {
         alias: 'p',
         type: 'array',
@@ -99,6 +103,7 @@ module.exports.run = () =>
       manifestBase,
       {
         manifest_version: 2,
+        default_locale: argv.locale,
         name: pkgName,
         content_scripts: autoGenContentScripts(injectScriptsDir)
       }
