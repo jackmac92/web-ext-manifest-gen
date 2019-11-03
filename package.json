@@ -28,6 +28,7 @@
     "lint": "eslint src/**/*.js"
   },
   "dependencies": {
+    "app-root-path": "^3.0.0",
     "yargs": "^14.2.0"
   },
   "devDependencies": {

@@ -1,7 +1,6 @@
 const fs = require('fs')
 const path = require('path')
-
-const appRootPath = process.cwd()
+const appRootPath = require('app-root-path')
 
 const isCodeFile = file =>
   ['.js', '.ts', '.jsx', '.tsx'].some(ext => file.endsWith(ext))
@@ -44,7 +43,7 @@ const autoGenContentScripts = contentScriptsDir =>
 module.exports.run = () =>
   new Promise((resolve, reject) => {
     if (!fs.existsSync(`${appRootPath}/package.json`)) {
-      console.error('Please run from the root of your npm project')
+      console.error('Please run from an npm project')
       console.error('No package.json found!!')
       process.exit(1)
     }
@@ -128,10 +127,7 @@ module.exports.run = () =>
     })
 
     try {
-      fs.writeFileSync(
-        `${appRootPath}/manifest.json`,
-        JSON.stringify(manifest, null, 4)
-      )
+      fs.writeFileSync('./manifest.json', JSON.stringify(manifest, null, 4))
     } catch (e) {
       reject(e)
     }
