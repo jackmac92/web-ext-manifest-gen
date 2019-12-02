@@ -7,9 +7,6 @@ include:
     file: 'node/meta.yml'
   - project: 'dropLoop/ci-templates'
     ref: master
-    file: 'node/core.yml'
-  - project: 'dropLoop/ci-templates'
-    ref: master
     file: 'node/dependencies.yml'
 
 stages:
