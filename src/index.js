@@ -1,5 +1,6 @@
 const fs = require('fs')
 const path = require('path')
+const TextToSVG = require('@spurtli/text-to-svg')
 const appRootPath = require('app-root-path')
 
 const isCodeFile = file =>
@@ -55,7 +56,6 @@ module.exports.run = () =>
     // TODO copy autogen permissions setup from that rollup lib
     // TODO handle content_security_policy
     // TODO handle icons
-    // handle browser actions
     const argv = require('yargs')
       .usage('Usage: $0 -s [injectScriptsDir] -p [permission]')
       .option('scripts', {
@@ -64,6 +64,9 @@ module.exports.run = () =>
       })
       .option('devTools', {
         describe: 'path to dev-tools html'
+      })
+      .option('svg-icon', {
+        describe: 'path to svg icon'
       })
       .option('template', {
         alias: 't',
@@ -89,13 +92,43 @@ module.exports.run = () =>
         describe: 'optional-permissions to include in manifest'
       })
       .demandOption(['scripts']).argv
+    const injectScriptsDir = argv.scripts
+    const mainIcon = (async () => {
+      const providedIcon = argv['svg-icon']
+      if (providedIcon) {
+        return providedIcon
+      }
+      const textToSVG = await TextToSVG.load()
+      const options = {
+        x: 0,
+        y: 0,
+        fontSize: 48,
+        anchor: 'top',
+        attributes: { fill: 'red', stroke: 'black' }
+      }
+      const path = textToSVG.getD(pkgName, options)
+      const generatedIconPath = './stock-generated-icon.svg'
+      fs.writeFileSync(generatedIconPath, path)
+      return generatedIconPath
+    })()
+    // COULDDO optimize svg https://github.com/svg/svgo
     const easilyOverridableDefaults = {
       permissions: [],
       optional_permissions: [],
       version,
-      description
+      description,
+      browser_action: {
+        default_icon: [16, 24, 32].reduce(
+          (acc, el) => ({ ...acc, [el]: mainIcon }),
+          {}
+        ),
+        default_title: pkgName
+      },
+      icons: [16, 19, 38, 64, 128].reduce(
+        (acc, el) => ({ ...acc, [el]: mainIcon }),
+        {}
+      )
     }
-    const injectScriptsDir = argv.scripts
     const manifestBase = JSON.parse(fs.readFileSync(argv.template)) || {}
     const manifest = Object.assign(
       {},
