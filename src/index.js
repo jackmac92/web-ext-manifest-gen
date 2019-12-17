@@ -42,7 +42,7 @@ const autoGenContentScripts = contentScriptsDir =>
   })
 
 module.exports.run = () =>
-  new Promise((resolve, reject) => {
+  new Promise((resolve, reject) => async () => {
     if (!fs.existsSync(`${appRootPath}/package.json`)) {
       console.error('Please run from an npm project')
       console.error('No package.json found!!')
@@ -93,7 +93,7 @@ module.exports.run = () =>
       })
       .demandOption(['scripts']).argv
     const injectScriptsDir = argv.scripts
-    const mainIcon = (async () => {
+    const mainIcon = await (async () => {
       const providedIcon = argv['svg-icon']
       if (providedIcon) {
         return providedIcon
