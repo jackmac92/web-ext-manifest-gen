@@ -105,7 +105,7 @@ module.exports.run = async () => {
     version,
     description,
     browser_action: {
-      default_icon: { 32: `${generatedIconPath}-testing` },
+      default_icon: { 32: `${generatedIconPath}` },
       default_title: pkgName
     },
     icons: { 128: `${generatedIconPath}` }
