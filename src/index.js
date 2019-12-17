@@ -65,9 +65,6 @@ module.exports.run = () =>
       .option('devTools', {
         describe: 'path to dev-tools html'
       })
-      .option('svg-icon', {
-        describe: 'path to svg icon'
-      })
       .option('template', {
         alias: 't',
         describe:
@@ -94,10 +91,6 @@ module.exports.run = () =>
       .demandOption(['scripts']).argv
     const injectScriptsDir = argv.scripts
     const mainIcon = await (async () => {
-      const providedIcon = argv['svg-icon']
-      if (providedIcon) {
-        return providedIcon
-      }
       const svgResponse = await fetch(
         `https://svgen-logo.jackmac92.now.sh/api/create?text=${encodeURIComponent(
           pkgName
