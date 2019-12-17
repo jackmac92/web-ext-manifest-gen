@@ -28,8 +28,8 @@
     "lint": "eslint src/**/*.js"
   },
   "dependencies": {
-    "@spurtli/text-to-svg": "^1.2.2",
     "app-root-path": "^3.0.0",
+    "node-fetch": "^2.6.0",
     "yargs": "^14.2.0"
   },
   "devDependencies": {

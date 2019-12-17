@@ -1,6 +1,6 @@
 const fs = require('fs')
 const path = require('path')
-const TextToSVG = require('@spurtli/text-to-svg')
+const fetch = require('node-fetch')
 const appRootPath = require('app-root-path')
 
 const isCodeFile = file =>
@@ -98,17 +98,14 @@ module.exports.run = () =>
       if (providedIcon) {
         return providedIcon
       }
-      const textToSVG = await TextToSVG.load()
-      const options = {
-        x: 0,
-        y: 0,
-        fontSize: 48,
-        anchor: 'top',
-        attributes: { fill: 'red', stroke: 'black' }
-      }
-      const path = textToSVG.getD(pkgName, options)
+      const svgResponse = await fetch(
+        `https://svgen-logo.jackmac92.now.sh/api/create?text=${encodeURIComponent(
+          pkgName
+        )}&size=300`
+      )
+      const svgContents = await svgResponse.arrayBuffer()
       const generatedIconPath = './stock-generated-icon.svg'
-      fs.writeFileSync(generatedIconPath, path)
+      fs.writeFileSync(generatedIconPath, Buffer.from(svgContents))
       return generatedIconPath
     })()
     // COULDDO optimize svg https://github.com/svg/svgo
@@ -118,18 +115,20 @@ module.exports.run = () =>
       version,
       description,
       browser_action: {
-        default_icon: [16, 24, 32].reduce(
-          (acc, el) => ({ ...acc, [el]: mainIcon }),
-          {}
-        ),
+        default_icon: { 32: mainIcon },
         default_title: pkgName
       },
-      icons: [16, 19, 38, 64, 128].reduce(
-        (acc, el) => ({ ...acc, [el]: mainIcon }),
-        {}
-      )
+      icons: { 128: mainIcon }
     }
-    const manifestBase = JSON.parse(fs.readFileSync(argv.template)) || {}
+    const manifestBase = (() => {
+      try {
+        const fileContents = fs.readFileSync(argv.template)
+        return JSON.parse(fileContents)
+      } catch (e) {
+        console.warn('Failed to parse a tempalte manifest, using empty object!')
+        return {}
+      }
+    })()
     const manifest = Object.assign(
       {},
       easilyOverridableDefaults,
