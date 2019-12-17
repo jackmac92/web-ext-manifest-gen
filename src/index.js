@@ -90,17 +90,15 @@ module.exports.run = () =>
       })
       .demandOption(['scripts']).argv
     const injectScriptsDir = argv.scripts
-    const mainIcon = await (async () => {
-      const svgResponse = await fetch(
-        `https://svgen-logo.jackmac92.now.sh/api/create?text=${encodeURIComponent(
-          pkgName
-        )}&size=300`
-      )
-      const svgContents = await svgResponse.arrayBuffer()
-      const generatedIconPath = './stock-generated-icon.svg'
-      fs.writeFileSync(generatedIconPath, Buffer.from(svgContents))
-      return generatedIconPath
-    })()
+    const svgResponse = await fetch(
+      `https://svgen-logo.jackmac92.now.sh/api/create?text=${encodeURIComponent(
+        pkgName
+      )}&size=300`
+    )
+    const svgContents = await svgResponse.arrayBuffer()
+    const generatedIconPath = './stock-generated-icon.svg'
+    fs.writeFileSync(generatedIconPath, Buffer.from(svgContents))
+
     // COULDDO optimize svg https://github.com/svg/svgo
     const easilyOverridableDefaults = {
       permissions: [],
@@ -108,10 +106,10 @@ module.exports.run = () =>
       version,
       description,
       browser_action: {
-        default_icon: { 32: mainIcon },
+        default_icon: { 32: generatedIconPath },
         default_title: pkgName
       },
-      icons: { 128: mainIcon }
+      icons: { 128: generatedIconPath }
     }
     const manifestBase = (() => {
       try {
