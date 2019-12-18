@@ -56,7 +56,6 @@ module.exports.run = async () => {
   } = require(`${appRootPath}/package.json`)
   // TODO copy autogen permissions setup from that rollup lib
   // TODO handle content_security_policy
-  // TODO handle icons
   const argv = require('yargs')
     .usage('Usage: $0 -s [injectScriptsDir] -p [permission]')
     .option('scripts', {
@@ -96,7 +95,7 @@ module.exports.run = async () => {
     })
     .demandOption(['scripts']).argv
   const injectScriptsDir = argv.scripts
-  // COULDDO optimize svg https://github.com/svg/svgo
+
   const easilyOverridableDefaults = {
     permissions: [],
     optional_permissions: [],
