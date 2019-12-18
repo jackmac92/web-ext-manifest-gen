@@ -74,6 +74,12 @@ module.exports.run = async () => {
       type: 'array',
       describe: 'path to background file, multiple entries allowed'
     })
+    .option('persistentBackground', {
+      type: 'boolean',
+      default: true,
+      describe:
+        'Persistent background script? Necessary for things like background websocket connections'
+    })
     .option('genIcon', {
       type: 'boolean',
       default: true,
@@ -159,7 +165,7 @@ module.exports.run = async () => {
   if (argv.backgroundScripts) {
     manifest.background = {
       scripts: argv.backgroundScripts,
-      persistent: true
+      persistent: argv.persistentBackground
     }
   }
   if (argv.optionalPermissions) {
