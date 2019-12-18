@@ -1,4 +1,6 @@
 const fs = require('fs')
+const write = require('write')
+const sharp = require('sharp')
 const path = require('path')
 const fetch = require('node-fetch')
 const appRootPath = require('app-root-path')
@@ -73,6 +75,11 @@ module.exports.run = async () => {
       type: 'array',
       describe: 'path to background file, multiple entries allowed'
     })
+    .option('genIcon', {
+      type: 'boolean',
+      default: true,
+      describe: 'Generate an icon based on project name'
+    })
     .option('locale', {
       describe: 'path to background file, multiple entries allowed',
       default: 'en'
@@ -89,15 +96,6 @@ module.exports.run = async () => {
     })
     .demandOption(['scripts']).argv
   const injectScriptsDir = argv.scripts
-  const svgResponse = await fetch(
-    `https://svgen-logo.jackmac92.now.sh/api/create?text=${encodeURIComponent(
-      pkgName
-    )}&size=300`
-  )
-  const svgContents = await svgResponse.arrayBuffer()
-  const generatedIconPath = './stock-generated-icon.svg'
-  fs.writeFileSync(generatedIconPath, Buffer.from(svgContents))
-
   // COULDDO optimize svg https://github.com/svg/svgo
   const easilyOverridableDefaults = {
     permissions: [],
@@ -105,10 +103,8 @@ module.exports.run = async () => {
     version,
     description,
     browser_action: {
-      default_icon: { 32: `${generatedIconPath}` },
       default_title: pkgName
-    },
-    icons: { 128: `${generatedIconPath}` }
+    }
   }
   const manifestBase = (() => {
     try {
@@ -125,6 +121,39 @@ module.exports.run = async () => {
     name: pkgName,
     content_scripts: autoGenContentScripts(injectScriptsDir)
   })
+  if (argv.genIcon) {
+    const logoText = (() => {
+      if (pkgName.length < 7) {
+        return pkgName
+      }
+      return pkgName.slice(0, 2)
+    })()
+    const svgResponse = await fetch(
+      `https://svgen-logo.jackmac92.now.sh/api/create?text=${encodeURIComponent(
+        logoText
+      )}&size=300`
+    )
+
+    const svgArrayBuffer = await svgResponse.arrayBuffer()
+    const svgContents = Buffer.from(svgArrayBuffer)
+    const iconSizes = [16, 19, 32, 38, 64, 128]
+    iconSizes.forEach(async sz => {
+      const png = await sharp(svgContents)
+        .resize(sz, sz)
+        .png()
+        .toBuffer()
+      await write(`./icons/icon-${sz}.png`, png)
+    })
+    manifest.browser_action.default_icon = [19, 38].reduce(
+      (acc, sz) => ({ ...acc, [sz]: `./icons/icon-${sz}.png` }),
+      {}
+    )
+    manifest.icons = [16, 32, 64, 128].reduce(
+      (acc, sz) => ({ ...acc, [sz]: `./icons/icon-${sz}.png` }),
+      {}
+    )
+  }
+
   if (argv.devTools) {
     manifest.devtools_page = argv.devTools
   }
@@ -147,5 +176,5 @@ module.exports.run = async () => {
       manifest.permissions.push(perm)
     }
   })
-  fs.writeFileSync('./manifest.json', JSON.stringify(manifest, null, 4))
+  await write('./manifest.json', JSON.stringify(manifest, null, 4))
 }
