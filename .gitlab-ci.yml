@@ -1,7 +1,3 @@
-# REMOVE THE BELOW TO ENABLE PUBLISHING
-variables:
-  PROJECT_STATUS: pre-alpha
-
 include:
   - project: 'dropLoop/ci-templates'
     ref: master
