@@ -25,8 +25,6 @@ const svg2png = async (svg, sizes = [32]) => {
   }
 }
 
-module.exports.svg2png = svg2png
-module.exports.svgGen = svgGen
 module.exports.run = async () => {
   const argv = require('yargs')
     .option('toPng', {

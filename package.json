@@ -1,5 +1,5 @@
 {
-  "name": "@jackmac92/mkicon",
+  "name": "mkicon",
   "version": "1.0.0",
   "@pika/pack": {
     "pipeline": [
