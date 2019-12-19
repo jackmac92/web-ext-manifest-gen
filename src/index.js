@@ -29,6 +29,7 @@ module.exports.svg2png = svg2png
 module.exports.svgGen = svgGen
 module.exports.run = async () => {
   const argv = require('yargs')
+    .usage('Usage: $0')
     .option('toPng', {
       type: 'array',
       description: 'A list of sizes to generate png logos'
