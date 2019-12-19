@@ -8,7 +8,7 @@ function main(argz) {
 module.exports.main = main
 
 function getArgs(argv) {
-  const args = require('yargs/yargs')(argv.slice(2))
+  const args = require('yargs')
     .command('execute [action]', 'execute specified action', yargs => {
       yargs.positional('action', {
         describe: 'cli action',
