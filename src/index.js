@@ -82,7 +82,7 @@ module.exports.run = async () => {
     })
     .option('genIcon', {
       type: 'boolean',
-      default: true,
+      default: false,
       describe: 'Generate an icon based on project name'
     })
     .option('locale', {
@@ -127,6 +127,7 @@ module.exports.run = async () => {
     content_scripts: autoGenContentScripts(injectScriptsDir)
   })
   if (argv.genIcon) {
+    console.warn('DEPRECATED: use jack-mkicon instead')
     const logoText = (() => {
       if (pkgName.length < 7) {
         return pkgName
