@@ -1,8 +1,6 @@
 const fs = require('fs')
 const write = require('write')
-const sharp = require('sharp')
 const path = require('path')
-const fetch = require('node-fetch')
 const appRootPath = require('app-root-path')
 
 const isCodeFile = file =>
@@ -80,11 +78,6 @@ module.exports.run = async () => {
       describe:
         'Persistent background script? Necessary for things like background websocket connections'
     })
-    .option('genIcon', {
-      type: 'boolean',
-      default: false,
-      describe: 'Generate an icon based on project name'
-    })
     .option('locale', {
       describe: 'path to background file, multiple entries allowed',
       default: 'en'
@@ -126,39 +119,6 @@ module.exports.run = async () => {
     name: pkgName,
     content_scripts: autoGenContentScripts(injectScriptsDir)
   })
-  if (argv.genIcon) {
-    console.warn('DEPRECATED: use jack-mkicon instead')
-    const logoText = (() => {
-      if (pkgName.length < 7) {
-        return pkgName
-      }
-      return pkgName.slice(0, 2)
-    })()
-    const svgResponse = await fetch(
-      `https://svgen-logo.jackmac92.now.sh/api/create?text=${encodeURIComponent(
-        logoText
-      )}&size=300`
-    )
-
-    const svgArrayBuffer = await svgResponse.arrayBuffer()
-    const svgContents = Buffer.from(svgArrayBuffer)
-    const iconSizes = [16, 19, 32, 38, 64, 128]
-    iconSizes.forEach(async sz => {
-      const png = await sharp(svgContents)
-        .resize(sz, sz)
-        .png()
-        .toBuffer()
-      await write(`./icons/icon-${sz}.png`, png)
-    })
-    manifest.browser_action.default_icon = [19, 38].reduce(
-      (acc, sz) => ({ ...acc, [sz]: `./icons/icon-${sz}.png` }),
-      {}
-    )
-    manifest.icons = [16, 32, 64, 128].reduce(
-      (acc, sz) => ({ ...acc, [sz]: `./icons/icon-${sz}.png` }),
-      {}
-    )
-  }
 
   if (argv.devTools) {
     manifest.devtools_page = argv.devTools
