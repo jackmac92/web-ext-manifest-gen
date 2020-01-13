@@ -1,6 +1,9 @@
 include:
   - project: 'dropLoop/ci-templates'
     ref: master
+    file: 'node/core.yml'
+  - project: 'dropLoop/ci-templates'
+    ref: master
     file: 'node/pika-publish.yml'
   - project: 'dropLoop/ci-templates'
     ref: master
