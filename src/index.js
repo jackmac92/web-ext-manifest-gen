@@ -1,17 +1,119 @@
 const fs = require('fs')
+const glob = require('glob')
 const write = require('write')
 const path = require('path')
 const appRootPath = require('app-root-path')
 
+const genRegex = perm =>
+  new RegExp(`(chromep?|browser)[\\s\\n]*\\.[\\s\\n]*${perm}`)
+
+const ALL_PERMISSIONS = {
+  alarms: s => genRegex('alarms').test(s),
+  bookmarks: s => genRegex('bookmarks').test(s),
+  contentSettings: s => genRegex('contentSettings').test(s),
+  contextMenus: s => genRegex('contextMenus').test(s),
+  cookies: s => genRegex('cookies').test(s),
+  declarativeContent: s => genRegex('declarativeContent').test(s),
+  declarativeNetRequest: s => genRegex('declarativeNetRequest').test(s),
+  declarativeWebRequest: s => genRegex('declarativeWebRequest').test(s),
+  desktopCapture: s => genRegex('desktopCapture').test(s),
+  displaySource: s => genRegex('displaySource').test(s),
+  dns: s => genRegex('dns').test(s),
+  documentScan: s => genRegex('documentScan').test(s),
+  downloads: s => genRegex('downloads').test(s),
+  experimental: s => genRegex('experimental').test(s),
+  fileBrowserHandler: s => genRegex('fileBrowserHandler').test(s),
+  fileSystemProvider: s => genRegex('fileSystemProvider').test(s),
+  fontSettings: s => genRegex('fontSettings').test(s),
+  gcm: s => genRegex('gcm').test(s),
+  geolocation: s => genRegex('geolocation').test(s),
+  history: s => genRegex('history').test(s),
+  identity: s => genRegex('identity').test(s),
+  idle: s => genRegex('idle').test(s),
+  idltest: s => genRegex('idltest').test(s),
+  management: s => genRegex('management').test(s),
+  nativeMessaging: s => genRegex('nativeMessaging').test(s),
+  notifications: s => genRegex('notifications').test(s),
+  pageCapture: s => genRegex('pageCapture').test(s),
+  platformKeys: s => genRegex('platformKeys').test(s),
+  power: s => genRegex('power').test(s),
+  printerProvider: s => genRegex('printerProvider').test(s),
+  privacy: s => genRegex('privacy').test(s),
+  processes: s => genRegex('processes').test(s),
+  proxy: s => genRegex('proxy').test(s),
+  sessions: s => genRegex('sessions').test(s),
+  signedInDevices: s => genRegex('signedInDevices').test(s),
+  storage: s => genRegex('storage').test(s),
+  tabCapture: s => genRegex('tabCapture').test(s),
+  // tabs: s => /(chromep?|browser)[\s\n]*\.[\s\n]*tabs/.test(s),
+  topSites: s => genRegex('topSites').test(s),
+  tts: s => genRegex('tts').test(s),
+  ttsEngine: s => genRegex('ttsEngine').test(s),
+  unlimitedStorage: s => genRegex('unlimitedStorage').test(s),
+  vpnProvider: s => genRegex('vpnProvider').test(s),
+  wallpaper: s => genRegex('wallpaper').test(s),
+  webNavigation: s => genRegex('webNavigation').test(s),
+  webRequest: s => genRegex('webRequest').test(s),
+  webRequestBlocking: s =>
+    ALL_PERMISSIONS.webRequest(s) && s.includes("'blocking'")
+}
+
+// TODO improve by walking dep tree https://www.npmjs.com/package/dependency-tree
+const findPermissions = () =>
+  new Promise((resolve, reject) => {
+    glob('./**/*.*s', (err, files) => {
+      if (err) {
+        reject(err)
+        return
+      }
+      resolve(files)
+    })
+  }).then(files =>
+    Promise.all(
+      files.map(f =>
+        new Promise(resolve => {
+          fs.readFile(f, {}, (err, data) => {
+            if (err) {
+              resolve('')
+            } else {
+              resolve(data.toString())
+            }
+          })
+        }).then(contents => [f, contents])
+      )
+    ).then(filesWithContents =>
+      filesWithContents.reduce((acc, [fileName, fileContents]) => {
+        Object.entries(ALL_PERMISSIONS)
+          .filter(([_, permTest]) => permTest(fileContents))
+          .forEach(([permType]) => {
+            console.log(
+              `${fileName} needs ${permType} in the permission set, adding.`
+            )
+            acc.add(permType)
+          })
+        return acc
+      }, new Set())
+    )
+  )
+
 const isCodeFile = file =>
   ['.js', '.ts', '.jsx', '.tsx'].some(ext => file.endsWith(ext))
 
+const forgivingReadDir = path => {
+  try {
+    const dir = fs.readdirSync(path)
+    return Promise.resolve(dir)
+  } catch (err) {
+    return Promise.reject(err)
+  }
+}
+const safeReadDir = p => forgivingReadDir(p).catch(() => [])
 const listFiles = folder =>
-  fs
-    .readdirSync(folder)
-    .filter(
+  safeReadDir(folder).then(files =>
+    files.filter(
       file => isCodeFile(file) && fs.lstatSync(path.join(folder, file)).isFile()
     )
+  )
 
 const getUrlMatches = scriptPath => {
   const scriptModuleLines = fs
@@ -35,11 +137,13 @@ const getUrlMatches = scriptPath => {
 }
 
 const autoGenContentScripts = contentScriptsDir =>
-  listFiles(contentScriptsDir).map(s => {
-    const scriptPath = path.join(contentScriptsDir, s)
-    const matches = getUrlMatches(scriptPath)
-    return { matches, js: [`./${scriptPath}`] }
-  })
+  listFiles(contentScriptsDir).then(o =>
+    o.map(s => {
+      const scriptPath = path.join(contentScriptsDir, s)
+      const matches = getUrlMatches(scriptPath)
+      return { matches, js: [`./${scriptPath}`] }
+    })
+  )
 
 module.exports.run = async () => {
   if (!fs.existsSync(`${appRootPath}/package.json`)) {
@@ -52,7 +156,7 @@ module.exports.run = async () => {
     version,
     description
   } = require(`${appRootPath}/package.json`)
-  // TODO copy autogen permissions setup from that rollup lib
+
   // TODO handle content_security_policy
   const argv = require('yargs')
     .usage('Usage: $0 -s [injectScriptsDir] -p [permission]')
@@ -78,6 +182,12 @@ module.exports.run = async () => {
       describe:
         'Persistent background script? Necessary for things like background websocket connections'
     })
+    .option('generatePermissions', {
+      type: 'boolean',
+      default: true,
+      describe:
+        'Read source code to try to deduce the necessary permissions? (alpha)'
+    })
     .option('locale', {
       describe: 'path to background file, multiple entries allowed',
       default: 'en'
@@ -90,13 +200,17 @@ module.exports.run = async () => {
     })
     .option('optionalPermissions', {
       type: 'array',
+      default: [],
       describe: 'optional-permissions to include in manifest'
-    })
-    .demandOption(['scripts']).argv
+    }).argv
   const injectScriptsDir = argv.scripts
 
+  const permissionsBase = await (argv.generatePermissions
+    ? findPermissions()
+    : Promise.resolve([]))
+
   const easilyOverridableDefaults = {
-    permissions: [],
+    permissions: permissionsBase,
     optional_permissions: [],
     version,
     description,
@@ -119,6 +233,8 @@ module.exports.run = async () => {
     name: pkgName,
     content_scripts: autoGenContentScripts(injectScriptsDir)
   })
+  manifest.permissions = new Set(manifest.permissions)
+  manifest.optional_permissions = new Set(manifest.optional_permissions)
 
   if (argv.devTools) {
     manifest.devtools_page = argv.devTools
@@ -129,18 +245,16 @@ module.exports.run = async () => {
       persistent: argv.persistentBackground
     }
   }
-  if (argv.optionalPermissions) {
-    argv.optionalPermissions.forEach(perm => {
-      if (!manifest['optional_permissions'].includes(perm)) {
-        manifest['optional_permissions'].push(perm)
-      }
-    })
-  }
+
+  argv.optionalPermissions.forEach(perm => {
+    manifest['optional_permissions'].add(perm)
+  })
 
   argv.permissions.forEach(perm => {
-    if (!manifest.permissions.includes(perm)) {
-      manifest.permissions.push(perm)
-    }
+    manifest.permissions.add(perm)
   })
+
+  manifest.permissions = Array.from(manifest.permissions)
+  manifest.optional_permissions = Array.from(manifest.optional_permissions)
   await write('./manifest.json', JSON.stringify(manifest, null, 4))
 }
