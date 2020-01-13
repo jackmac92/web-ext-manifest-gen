@@ -2,6 +2,7 @@ const fs = require('fs')
 const glob = require('glob')
 const write = require('write')
 const path = require('path')
+const dependencyTree = require('dependency-tree')
 const appRootPath = require('app-root-path')
 
 const genRegex = perm =>
@@ -58,8 +59,7 @@ const ALL_PERMISSIONS = {
     ALL_PERMISSIONS.webRequest(s) && s.includes("'blocking'")
 }
 
-// TODO improve by walking dep tree https://www.npmjs.com/package/dependency-tree
-const findPermissions = () =>
+const findAllDependentFiles = () =>
   new Promise((resolve, reject) => {
     glob('./**/*.*s', (err, files) => {
       if (err) {
@@ -68,7 +68,30 @@ const findPermissions = () =>
       }
       resolve(files)
     })
-  }).then(files =>
+  })
+    .then(files =>
+      files.reduce((acc, f) => {
+        global.window = global.window || true
+        dependencyTree
+          .toList({
+            filename: f,
+            tsConfig: '../tsconfig.json',
+            directory: process.cwd(),
+            filter: path =>
+              !['__tests__', '__test__', '.spec.', '.test.'].some(x =>
+                path.includes(x)
+              )
+          })
+          .forEach(dep => {
+            acc.add(dep)
+          })
+        return acc
+      }, new Set())
+    )
+    .then(s => Array.from(s))
+
+const findPermissions = () =>
+  findAllDependentFiles().then(files =>
     Promise.all(
       files.map(f =>
         new Promise(resolve => {
@@ -83,14 +106,17 @@ const findPermissions = () =>
       )
     ).then(filesWithContents =>
       filesWithContents.reduce((acc, [fileName, fileContents]) => {
-        Object.entries(ALL_PERMISSIONS)
+        const foundPermissions = Object.entries(ALL_PERMISSIONS)
           .filter(([_, permTest]) => permTest(fileContents))
-          .forEach(([permType]) => {
-            console.log(
-              `${fileName} needs ${permType} in the permission set, adding.`
-            )
-            acc.add(permType)
-          })
+          .map(([permType]) => permType)
+
+        for (const permType of foundPermissions) {
+          console.log(
+            `${fileName} needs ${permType} in the permission set, adding.`
+          )
+          acc.add(permType)
+        }
+
         return acc
       }, new Set())
     )
@@ -184,7 +210,7 @@ module.exports.run = async () => {
     })
     .option('generatePermissions', {
       type: 'boolean',
-      default: true,
+      default: false,
       describe:
         'Read source code to try to deduce the necessary permissions? (alpha)'
     })
