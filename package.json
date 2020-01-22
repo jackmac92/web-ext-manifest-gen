@@ -1,6 +1,6 @@
 {
   "name": "web-ext-manifest-gen",
-  "version": "1.4.1",
+  "version": "2.2.0",
   "@pika/pack": {
     "pipeline": [
       [
