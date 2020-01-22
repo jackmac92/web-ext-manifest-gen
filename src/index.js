@@ -257,7 +257,7 @@ module.exports.run = async () => {
     default_locale: argv.locale,
     name: pkgName
   })
-  if (argv.scripts.length > 0) {
+  if (argv.scripts) {
     manifest.content_scripts = autoGenContentScripts(argv.scripts)
   }
   manifest.permissions = new Set(manifest.permissions)
