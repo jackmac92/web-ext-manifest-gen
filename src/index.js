@@ -229,7 +229,6 @@ module.exports.run = async () => {
       default: [],
       describe: 'optional-permissions to include in manifest'
     }).argv
-  const injectScriptsDir = argv.scripts
 
   const permissionsBase = await (argv.generatePermissions
     ? findPermissions()
@@ -256,9 +255,11 @@ module.exports.run = async () => {
   const manifest = Object.assign({}, easilyOverridableDefaults, manifestBase, {
     manifest_version: 2,
     default_locale: argv.locale,
-    name: pkgName,
-    content_scripts: autoGenContentScripts(injectScriptsDir)
+    name: pkgName
   })
+  if (argv.scripts.length > 0) {
+    manifest.content_scripts = autoGenContentScripts(argv.scripts)
+  }
   manifest.permissions = new Set(manifest.permissions)
   manifest.optional_permissions = new Set(manifest.optional_permissions)
 
