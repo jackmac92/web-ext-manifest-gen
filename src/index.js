@@ -67,7 +67,7 @@ const findAllDependentFiles = () =>
         reject(err);
         return;
       }
-      resolve(files);
+      resolve(files.filter(f => f.indexOf("node_modules") === -1));
     });
   })
     .then(async files => {
@@ -85,13 +85,9 @@ const findAllDependentFiles = () =>
             directory,
             // tsConfig,
             filter: path =>
-              [
-                "node_modules",
-                "__tests__",
-                "__test__",
-                ".spec.",
-                ".test."
-              ].every(x => !path.includes(x))
+              ["__tests__", "__test__", ".spec.", ".test."].every(
+                x => !path.includes(x)
+              )
           })
           .forEach(dep => {
             acc.add(dep);
@@ -115,22 +111,24 @@ const findPermissions = () =>
           });
         }).then(contents => [f, contents])
       )
-    ).then(filesWithContents =>
-      filesWithContents.reduce((acc, [fileName, fileContents]) => {
-        const foundPermissions = Object.entries(ALL_PERMISSIONS)
-          .filter(([_, permTest]) => permTest(fileContents))
-          .map(([permType]) => permType);
-
-        for (const permType of foundPermissions) {
-          console.log(
-            `${fileName} needs ${permType} in the permission set, adding.`
-          );
-          acc.add(permType);
-        }
-
-        return acc;
-      }, new Set())
     )
+      .then(filesWithContents =>
+        filesWithContents.reduce((acc, [fileName, fileContents]) => {
+          const foundPermissions = Object.entries(ALL_PERMISSIONS)
+            .filter(([_, permTest]) => permTest(fileContents))
+            .map(([permType]) => permType);
+
+          for (const permType of foundPermissions) {
+            console.log(
+              `${fileName} needs ${permType} in the permission set, adding.`
+            );
+            acc.add(permType);
+          }
+
+          return acc;
+        }, new Set())
+      )
+      .then(set => Array.from(set))
   );
 
 const isCodeFile = file =>
