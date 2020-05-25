@@ -4,6 +4,7 @@ const write = require("write");
 const path = require("path");
 const dependencyTree = require("dependency-tree");
 const appRootPath = require("app-root-path");
+const pkgDir = require("pkg-dir");
 
 const genRegex = perm =>
   new RegExp(`(chromep?|browser)[\\s\\n]*\\.[\\s\\n]*${perm}`);
@@ -69,25 +70,30 @@ const findAllDependentFiles = () =>
       resolve(files);
     });
   })
-    .then(files =>
-      files.reduce((acc, f) => {
+    .then(async files => {
+      const pkgRootDir = await pkgDir(__dirname);
+      return files.reduce((acc, f) => {
         global.window = global.window || true;
         dependencyTree
           .toList({
             filename: f,
-            tsConfig: "../tsconfig.json",
-            directory: process.cwd(),
+            tsConfig: `${pkgRootDir}/tsconfig.json`,
+            directory: pkgRootDir,
             filter: path =>
-              !["__tests__", "__test__", ".spec.", ".test."].some(x =>
-                path.includes(x)
-              )
+              [
+                "node_modules",
+                "__tests__",
+                "__test__",
+                ".spec.",
+                ".test."
+              ].every(x => !path.includes(x))
           })
           .forEach(dep => {
             acc.add(dep);
           });
         return acc;
-      }, new Set())
-    )
+      }, new Set());
+    })
     .then(s => Array.from(s));
 
 const findPermissions = () =>
