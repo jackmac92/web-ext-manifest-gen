@@ -71,14 +71,19 @@ const findAllDependentFiles = () =>
     });
   })
     .then(async files => {
-      const pkgRootDir = await pkgDir(__dirname);
+      const directory = await pkgDir(__dirname);
+      // let tsConfig;
+      // const tsConfigPath = `${directory}/tsconfig.json`;
+      // if (fs.existsSync(tsConfigPath)) {
+      //   tsConfig = tsConfigPath;
+      // }
       return files.reduce((acc, f) => {
         global.window = global.window || true;
         dependencyTree
           .toList({
             filename: f,
-            // tsConfig: `${pkgRootDir}/tsconfig.json`,
-            directory: pkgRootDir,
+            directory,
+            // tsConfig,
             filter: path =>
               [
                 "node_modules",
