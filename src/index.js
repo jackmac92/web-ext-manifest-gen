@@ -77,7 +77,7 @@ const findAllDependentFiles = () =>
         dependencyTree
           .toList({
             filename: f,
-            tsConfig: `${pkgRootDir}/tsconfig.json`,
+            // tsConfig: `${pkgRootDir}/tsconfig.json`,
             directory: pkgRootDir,
             filter: path =>
               [
