@@ -31,6 +31,7 @@
     "app-root-path": "^3.0.0",
     "dependency-tree": "^7.2.0",
     "glob": "^7.1.6",
+    "pkg-dir": "^4.2.0",
     "write": "^2.0.0",
     "yargs": "^14.2.0"
   },
