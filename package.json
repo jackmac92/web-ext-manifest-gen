@@ -43,7 +43,8 @@
     "@pika/plugin-standard-pkg": "^0.6.1",
     "commitlint": "^8.1.0",
     "eslint": "^6.5.1",
-    "jest": "^24.9.0"
+    "jest": "^24.9.0",
+    "typescript": "^3.9.3"
   },
   "commitlint": {
     "extends": [
