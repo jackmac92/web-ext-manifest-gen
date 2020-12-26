@@ -22,7 +22,7 @@ const bundleCode = (outpath, ...entrypoints) => new Promise((resolve, reject) =>
 });
 
 const mktemp = () => new Promise((resolve, reject) => {
-  tmp((err, path) => {
+  tmp.file((err, path) => {
     if (err) {
       reject(err);
     }
