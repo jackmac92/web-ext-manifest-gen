@@ -284,7 +284,7 @@ export const run = async () => {
       describe: "optional-permissions to include in manifest"
     }).argv;
 
-  const permissionsBase = await (argv.generatePermissions
+  const permissionsBase = await (argv.generatePermissions === true
     ? findPermissions()
     : Promise.resolve([]));
 

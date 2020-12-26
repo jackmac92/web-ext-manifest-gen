@@ -24,7 +24,7 @@
   },
   "scripts": {
     "build": "pika build",
-    "test": "echo 'Hopefully it works'",
+    "test": "jest",
     "lint": "eslint src/**/*.js"
   },
   "dependencies": {
@@ -45,6 +45,7 @@
     "commitlint": "^8.1.0",
     "eslint": "^6.5.1",
     "jest": "^24.9.0",
+    "ts-jest": "^24.2.0",
     "typescript": "^3.9.3"
   },
   "commitlint": {
