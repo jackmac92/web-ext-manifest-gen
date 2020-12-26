@@ -1,4 +1,6 @@
 import fs from "fs";
+import tmp from 'tmp'
+import child_process from 'child_process';
 import glob from "glob";
 import write from "write";
 import path from "path";
@@ -8,6 +10,86 @@ import pkgDir from "pkg-dir";
 import identifyRequiredPerms from "./permissionExtractor";
 import { JSONSchemaForGoogleChromeExtensionManifestFiles as ExtensionManifest } from "./browser-extension-manifest";
 
+const bundleCode = (outpath, ...entrypoints) => new Promise((resolve, reject) => {
+  child_process.exec(`rollup --format=es -p=typescript --file=${outpath} -- ${entrypoints.join(" ")}`, (err, stdout, stderr) => {
+    if (err) {
+      reject(err);
+    }
+    else {
+      resolve();
+    }
+  });
+});
+
+const mktemp = () => new Promise((resolve, reject) => {
+  tmp((err, path) => {
+    if (err) {
+      reject(err);
+    }
+    else {
+      resolve(path);
+    }
+  });
+});
+
+const _hasJq = () => {
+  try {
+    child_process.execSync("which semgrep");
+    return true;
+  }
+  catch (_e) {
+    throw "You must install `jq`, google it!";
+  }
+};
+const _hasSemgrep = () => {
+  try {
+    child_process.execSync("which semgrep");
+    return true;
+  }
+  catch (_e) {
+    throw "You must install `semgrep`, google it!";
+  }
+};
+const verifyPermFinderDeps = () => {
+  _hasJq();
+  _hasSemgrep();
+};
+const findUsedPermissionsCore = (bundledJsPath): Promise<any[]> => new Promise((resolve, reject) => {
+  child_process.exec(`semgrep -e 'browser.$X' --json --quiet --lang=js --exclude=node_modules ${bundledJsPath} | jq '.results | .[] | .extra.metavars."$X".abstract_content' -r | sort -u`, (err, stdout, stderr) => {
+    if (err) {
+      reject(stderr);
+    }
+    else {
+      const r = stdout.toString().split("\n").filter(Boolean);
+      resolve(r);
+    }
+  });
+});
+const _checkForBlockingWebrequestPerm = (bundledJsPath) => new Promise((resolve, reject) => {
+  child_process.exec(`semgrep -e 'browser.webRequest.$R.addListener($CB, $PARAMS, [..., "blocking", ...])' --json --quiet --lang=js --exclude=node_modules ${bundledJsPath} | jq '.results | .[] | .extra.metavars."$X".abstract_content' -r | sort -u`, (err, stdout, stderr) => {
+    if (err) {
+      reject(stderr);
+    }
+    else {
+      const countFound = stdout.toString().split("\n").filter(Boolean)
+        .length;
+      resolve(countFound > 0);
+    }
+  });
+}).then((a) => a, () => false);
+
+const findUsedPermissions = async (bundledJsPath) => [
+  ...(await findUsedPermissionsCore(bundledJsPath)),
+  (await _checkForBlockingWebrequestPerm(bundledJsPath))
+    ? "webRequestBlocking"
+    : null,
+].filter(Boolean);
+const findPermissions = async (...entrypoints) => {
+  verifyPermFinderDeps();
+  const bundledJsPath = await mktemp();
+  await bundleCode(bundledJsPath, ...entrypoints);
+  return findUsedPermissions(bundledJsPath);
+};
 const findAllDependentFiles = () =>
   new Promise((resolve, reject) => {
     glob("./**/*.*s", (err, files) => {
@@ -46,7 +128,7 @@ const findAllDependentFiles = () =>
     })
     .then(s => Array.from(s));
 
-const findPermissions = () =>
+const _findPermissionsLegacy = () =>
   findAllDependentFiles().then(files =>
     Promise.all(
       files.map((f: string) =>
@@ -240,8 +322,6 @@ export const run = async () => {
       manifest.content_scripts = generatedContentScripts;
     }
   }
-  manifest.permissions = [];
-  manifest.optional_permissions = [];
 
   if (argv.devTools) {
     manifest.devtools_page = argv.devTools;
