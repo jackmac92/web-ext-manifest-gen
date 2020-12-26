@@ -302,7 +302,7 @@ export const run = async () => {
       const fileContents = fs.readFileSync(argv.template);
       return JSON.parse(fileContents.toString());
     } catch (e) {
-      console.warn("Failed to parse a tempalte manifest, using empty object!");
+      console.warn("Failed to parse a template manifest, using empty object!");
       return {};
     }
   })();
