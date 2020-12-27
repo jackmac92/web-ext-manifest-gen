@@ -343,7 +343,8 @@ export const run = async () => {
         ...manifest.content_scripts.reduce((acc, el) => [...acc, ...el.js], [])
       ];
     }
-    manifest.permissions.concat(await findPermissions(...entrypoints))
+    const discoveredPerms = await findPermissions(...entrypoints)
+    manifest.permissions.push(...discoveredPerms)
   }
 
   argv.optionalPermissions.forEach(perm => {
