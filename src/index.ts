@@ -11,12 +11,14 @@ import identifyRequiredPerms from "./permissionExtractor";
 import { JSONSchemaForGoogleChromeExtensionManifestFiles as ExtensionManifest } from "./browser-extension-manifest";
 
 const bundleCode = (outpath, ...entrypoints) => new Promise((resolve, reject) => {
-  child_process.exec(`rollup --format=es -p=typescript --file=${outpath} -- ${entrypoints.join(" ")}`, (err, stdout, stderr) => {
+  const cmd = `rollup --format=es -p=commonjs -p=node-resolve -p=typescript --file=${outpath} -- ${entrypoints.join(" ")}`
+  console.log('Running', cmd)
+  child_process.exec(cmd, (err, stdout, stderr) => {
     if (err) {
       reject(err);
     }
     else {
-      resolve();
+      resolve(void 0);
     }
   });
 });
@@ -55,7 +57,7 @@ const verifyPermFinderDeps = () => {
   _hasSemgrep();
 };
 const findUsedPermissionsCore = (bundledJsPath): Promise<any[]> => new Promise((resolve, reject) => {
-  child_process.exec(`semgrep -e 'browser.$X' --json --quiet --lang=js --exclude=node_modules ${bundledJsPath} | jq '.results | .[] | .extra.metavars."$X".abstract_content' -r | sort -u`, (err, stdout, stderr) => {
+  child_process.exec(`semgrep -e 'lib.browser.$X' --json --quiet --lang=js --exclude=node_modules ${bundledJsPath} | jq '.results | .[] | .extra.metavars."$X".abstract_content' -r | sort -u`, (err, stdout, stderr) => {
     if (err) {
       reject(stderr);
     }
@@ -86,8 +88,11 @@ const findUsedPermissions = async (bundledJsPath) => [
 ].filter(Boolean);
 const findPermissions = async (...entrypoints) => {
   verifyPermFinderDeps();
+  console.log("Required dependencies are present!")
   const bundledJsPath = await mktemp();
+  console.log("Bundling code")
   await bundleCode(bundledJsPath, ...entrypoints);
+  console.log("Bundling code DONE!")
   return findUsedPermissions(bundledJsPath);
 };
 const findAllDependentFiles = () =>
@@ -101,7 +106,7 @@ const findAllDependentFiles = () =>
     });
   })
     .then(async (files: string[]) => {
-      const directory = await pkgDir(__dirname);
+      const directory = await pkgDir(process.cwd());
       // let tsConfig;
       // const tsConfigPath = `${directory}/tsconfig.json`;
       // if (fs.existsSync(tsConfigPath)) {
@@ -276,7 +281,7 @@ export const run = async () => {
       alias: "p",
       type: "array",
       describe: "permissions to include in manifest",
-      default: ["activeTab"]
+      default: []
     })
     .option("optionalPermissions", {
       type: "array",
@@ -284,9 +289,7 @@ export const run = async () => {
       describe: "optional-permissions to include in manifest"
     }).argv;
 
-  const permissionsBase = await (argv.generatePermissions === true
-    ? findPermissions()
-    : Promise.resolve([]));
+  const permissionsBase = [];
 
   const easilyOverridableDefaults = {
     permissions: permissionsBase,
@@ -331,6 +334,26 @@ export const run = async () => {
       scripts: argv.backgroundScripts,
       persistent: argv.persistentBackground
     };
+  }
+
+  console.dir(manifest.background)
+  console.dir(manifest.content_scripts)
+
+  if (argv.generatePermissions) {
+    let entrypoints = []
+    if (manifest.background && manifest.background.scripts) {
+      entrypoints = manifest.background.scripts
+    }
+    if (manifest.content_scripts) {
+      entrypoints = [
+        ...entrypoints,
+        ...manifest.content_scripts.reduce((acc, el) => [...acc, ...el.js], [])
+      ];
+    }
+    manifest.permissions = [
+      ...manifest.permissions,
+      ...(await findPermissions(...entrypoints))
+    ];
   }
 
   argv.optionalPermissions.forEach(perm => {
