@@ -343,10 +343,7 @@ export const run = async () => {
         ...manifest.content_scripts.reduce((acc, el) => [...acc, ...el.js], [])
       ];
     }
-    manifest.permissions = [
-      ...manifest.permissions,
-      ...(await findPermissions(...entrypoints))
-    ];
+    manifest.permissions.concat(await findPermissions(...entrypoints))
   }
 
   argv.optionalPermissions.forEach(perm => {
@@ -356,6 +353,7 @@ export const run = async () => {
   argv.permissions.forEach(perm => {
     manifest.permissions.push(perm);
   });
+  manifest.permissions = manifest.permissions.filter(x => !manifest["optional_permissions"].includes(x))
 
   manifest.permissions = Array.from(new Set(manifest.permissions));
   manifest.optional_permissions = Array.from(
