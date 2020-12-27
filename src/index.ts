@@ -12,7 +12,6 @@ import { JSONSchemaForGoogleChromeExtensionManifestFiles as ExtensionManifest } 
 
 const bundleCode = (outpath, ...entrypoints) => new Promise((resolve, reject) => {
   const cmd = `rollup --format=es -p=commonjs -p=node-resolve -p=typescript --file=${outpath} -- ${entrypoints.join(" ")}`
-  console.log('Running', cmd)
   child_process.exec(cmd, (err, stdout, stderr) => {
     if (err) {
       reject(err);
@@ -88,11 +87,8 @@ const findUsedPermissions = async (bundledJsPath) => [
 ].filter(Boolean);
 const findPermissions = async (...entrypoints) => {
   verifyPermFinderDeps();
-  console.log("Required dependencies are present!")
   const bundledJsPath = await mktemp();
-  console.log("Bundling code")
   await bundleCode(bundledJsPath, ...entrypoints);
-  console.log("Bundling code DONE!")
   return findUsedPermissions(bundledJsPath);
 };
 const findAllDependentFiles = () =>
@@ -335,9 +331,6 @@ export const run = async () => {
       persistent: argv.persistentBackground
     };
   }
-
-  console.dir(manifest.background)
-  console.dir(manifest.content_scripts)
 
   if (argv.generatePermissions) {
     let entrypoints = []
