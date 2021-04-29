@@ -34,7 +34,7 @@ const ALL_PERMISSIONS = {
   idle: s => genRegex("idle").test(s),
   idltest: s => genRegex("idltest").test(s),
   management: s => genRegex("management").test(s),
-  nativeMessaging: s => genRegex("nativeMessaging").test(s),
+  nativeMessaging: s => ["connectNative", "nativeMessaging"].some(sym => genRegex(sym).test(s)),
   notifications: s => genRegex("notifications").test(s),
   pageCapture: s => genRegex("pageCapture").test(s),
   platformKeys: s => genRegex("platformKeys").test(s),
