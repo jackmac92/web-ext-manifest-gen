@@ -343,8 +343,8 @@ export const run = async () => {
         ...manifest.content_scripts.reduce((acc, el) => [...acc, ...el.js], [])
       ];
     }
-    const directory = await pkgDir(process.cwd());
-    entrypoints = entrypoints.map(e => path.join(directory, e))
+    // const directory = await pkgDir(process.cwd());
+    // entrypoints = entrypoints.map(e => path.join(directory, e))
     const discoveredPerms = await findPermissions(...entrypoints)
     manifest.permissions.push(...discoveredPerms)
   }
