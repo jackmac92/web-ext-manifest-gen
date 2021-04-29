@@ -35,7 +35,7 @@ const mktemp = () => new Promise((resolve, reject) => {
 
 const _hasJq = () => {
   try {
-    child_process.execSync("which semgrep");
+    child_process.execSync("which jq");
     return true;
   }
   catch (_e) {
