@@ -1,10 +1,3 @@
-// TODO use semgrep for this
-//// bundle to find relevant code
-// rollup --format=es -p=typescript --file=rolledup.js -- src/code/background/index.ts
-//// add permission of same name for each line of output
-// cat rolledup.js | semgrep -e 'browser.$X' --json --quiet --lang=js | jq '.results | .[] | .extra.metavars."$X".abstract_content' -r | sort -u
-//// add webRequestBlocking if this is a match
-// cat rolledup.js | semgrep -e 'browser.webRequest.$R.addListener(..., ..., ["blocking", ...])'
 
 const genRegex = perm =>
   new RegExp(`(chromep?|browser)[\\s\\n]*\\.[\\s\\n]*${perm}`);
