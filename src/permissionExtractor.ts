@@ -1,6 +1,10 @@
-
-const genRegex = perm =>
-  new RegExp(`(chromep?|browser)[\\s\\n]*\\.[\\s\\n]*${perm}`);
+const genRegex = perm => {
+  let rgxInsert = perm
+  if (Array.isArray(perm)) {
+    rgxInsert = perm.join('[\\s\\n]*\\.[\\s\\n]*')
+  }
+  return new RegExp(`(chromep?|browser)[\\s\\n]*\\.[\\s\\n]*${rgxInsert}`);
+}
 
 const ALL_PERMISSIONS = {
   alarms: s => genRegex("alarms").test(s),
@@ -27,7 +31,7 @@ const ALL_PERMISSIONS = {
   idle: s => genRegex("idle").test(s),
   idltest: s => genRegex("idltest").test(s),
   management: s => genRegex("management").test(s),
-  nativeMessaging: s => ["connectNative", "nativeMessaging"].some(sym => genRegex(sym).test(s)),
+  nativeMessaging: s => [["runtime", "connectNative"], "nativeMessaging"].some(sym => genRegex(sym).test(s)),
   notifications: s => genRegex("notifications").test(s),
   pageCapture: s => genRegex("pageCapture").test(s),
   platformKeys: s => genRegex("platformKeys").test(s),
