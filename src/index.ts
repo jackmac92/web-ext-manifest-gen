@@ -334,6 +334,7 @@ export const run = async () => {
       return {};
     }
   })();
+  let context = await pkgDir(process.cwd());
   const manifest: ExtensionManifest = Object.assign(
     {},
     easilyOverridableDefaults,
@@ -349,6 +350,10 @@ export const run = async () => {
     if (generatedContentScripts !== null) {
       manifest.content_scripts = generatedContentScripts;
     }
+  }
+
+  if (argv.context) {
+    context = path.resolve(__dirname, argv.context)
   }
 
   if (argv.devTools) {
