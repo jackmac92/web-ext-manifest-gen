@@ -235,6 +235,7 @@ const getUrlMatches = (scriptPath: string): [string, ...string[]] => {
 };
 
 type ContentScripts = ExtensionManifest["content_scripts"];
+type ContentScript = ExtensionManifest["content_scripts"][number];
 
 const createContentScript = (contentScriptsDir: string) => (
   s: string
@@ -244,6 +245,14 @@ const createContentScript = (contentScriptsDir: string) => (
   return { matches, js: [`./${scriptPath}`] };
 };
 
+const isContentScripts = (obj: unknown): obj is ContentScripts => {
+  return Array.isArray(obj) && obj.every(isContentScript);
+};
+
+const isContentScript = (obj: unknown): obj is ContentScript => {
+  return obj !== null && Array.isArray((obj as ContentScript).matches);
+};
+
 const autoGenContentScripts = (
   contentScriptsDir: string
 ): Promise<ContentScripts | null> =>
@@ -251,7 +260,11 @@ const autoGenContentScripts = (
     if (o.length < 1) {
       return null;
     }
-    return o.map(createContentScript(contentScriptsDir)) as ContentScripts;
+    const result = o.map(createContentScript(contentScriptsDir));
+    if (!isContentScripts(result)) {
+      throw new TypeError("Malformed content scripts");
+    }
+    return result;
   });
 
 export const run = async () => {
@@ -270,6 +283,10 @@ export const run = async () => {
   // TODO handle content_security_policy
   const argv = require("yargs")
     .usage("Usage: $0 -s [injectScriptsDir] -p [permission]")
+    .option("context", {
+      alias: "c",
+      describe: "root path used as for all other relative paths",
+    })
     .option("scripts", {
       alias: "s",
       describe: "path to content scripts",
@@ -353,7 +370,7 @@ export const run = async () => {
   }
 
   if (argv.context) {
-    context = path.resolve(__dirname, argv.context)
+    context = path.resolve(import.meta.url, argv.context);
   }
 
   if (argv.devTools) {
