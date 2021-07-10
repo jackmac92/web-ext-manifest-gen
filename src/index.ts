@@ -35,6 +35,17 @@ const mktemp = () =>
     });
   });
 
+const getVersionFromGitTags = () => new Promise((resolve, reject) => {
+  child_process.exec("git tag --list", (err, stdout, stderr) => {
+    if (err) {
+      reject(err)
+      return
+    }
+    const out = stdout.toString().split('\n').map(el => el.match(/([\d\.]+\d)/i)).filter(Boolean).map(reMatch => reMatch[1]).sort().reverse()[0]
+    resolve(out)
+  })
+})
+
 const _hasJq = () => {
   try {
     child_process.execSync("which jq");
@@ -275,7 +286,7 @@ export const run = async () => {
   }
   const {
     name: pkgName,
-    version,
+    version: packageJsonVersion,
     description,
   } = require(`${appRootPath}/package.json`);
 
@@ -332,6 +343,17 @@ export const run = async () => {
     }).argv;
 
   const permissionsBase = [];
+
+  let version
+  if (typeof packageJsonVersion === "string" && packageJsonVersion.length > 0) {
+    version = packageJsonVersion
+  } else {
+    try {
+      version = await getVersionFromGitTags()
+    } catch {
+      console.warn("No version provided, and unable to lookup in git tags")
+    }
+  }
 
   const easilyOverridableDefaults = {
     permissions: permissionsBase,
