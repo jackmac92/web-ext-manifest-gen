@@ -344,16 +344,7 @@ export const run = async () => {
 
   const permissionsBase = [];
 
-  let version
-  if (typeof packageJsonVersion === "string" && packageJsonVersion.length > 0) {
-    version = packageJsonVersion
-  } else {
-    try {
-      version = await getVersionFromGitTags()
-    } catch {
-      console.warn("No version provided, and unable to lookup in git tags")
-    }
-  }
+  const version = await determineVersion(packageJsonVersion);
 
   const easilyOverridableDefaults = {
     permissions: permissionsBase,
@@ -439,3 +430,19 @@ export const run = async () => {
   );
   await write("./manifest.json", JSON.stringify(manifest, null, 4));
 };
+
+async function determineVersion(packageJsonVersion: any) {
+  let version;
+  if (process.env.CI && process.env.CI_COMMIT_NAME) {
+    version = process.env.CI_COMMIT_NAME
+  } else if (typeof packageJsonVersion === "string" && packageJsonVersion.length > 0) {
+    version = packageJsonVersion;
+  } else {
+    try {
+      version = await getVersionFromGitTags();
+    } catch {
+      console.warn("No version provided, and unable to lookup in git tags");
+    }
+  }
+  return version;
+}
