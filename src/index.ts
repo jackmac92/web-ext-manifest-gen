@@ -11,9 +11,9 @@ import pkgDir from "pkg-dir";
 import identifyRequiredPerms from "./permissionExtractor";
 import { JSONSchemaForGoogleChromeExtensionManifestFiles as ExtensionManifest } from "./browser-extension-manifest";
 
-const logger = debug('main')
-const genPermsLogger = debug('generatePermissions')
-const semgrepLogger = debug('generatePermissions:semgrep')
+const logger = debug('web-ext-manifest-gen')
+const genPermsLogger = logger.extend('generatePermissions')
+const semgrepLogger = genPermsLogger.extend('semgrep')
 
 
 function bundleCode(outpath, ...entrypoints) {
