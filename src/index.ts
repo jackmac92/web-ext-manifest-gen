@@ -12,19 +12,16 @@ import identifyRequiredPerms from "./permissionExtractor";
 import { JSONSchemaForGoogleChromeExtensionManifestFiles as ExtensionManifest } from "./browser-extension-manifest";
 
 const logger = debug('main')
-// TODO check if below is different
-const logger2 = debug('main')
-logger("starting")
-logger2("starting2")
 const genPermsLogger = debug('generatePermissions')
+const semgrepLogger = debug('generatePermissions:semgrep')
 
 
 function bundleCode(outpath, ...entrypoints) {
   genPermsLogger('Bundling code')
+  const entrypointStr = entrypoints.join(" ")
+  genPermsLogger(entrypointStr)
   return new Promise((resolve, reject) => {
-    const cmd = `rollup --format=es -p=commonjs -p=node-resolve -p=typescript --file=${outpath} -- ${entrypoints.join(
-      " "
-    )}`;
+    const cmd = `rollup --format=es -p=commonjs -p=node-resolve -p=typescript --file=${outpath} -- ${entrypointStr}`;
     child_process.exec(cmd, (err, stdout, stderr) => {
       genPermsLogger(stdout);
       if (err) {
@@ -87,13 +84,17 @@ const verifyPermFinderDeps = () => {
 
 const _findUsedPermssionsSemgrepHelper = (bundledJsPath) => (semgrepSearch: string) =>
   new Promise((resolve, reject) => {
+    const semgrepQuery = `semgrep -e '${semgrepSearch}' --json --quiet --lang=js --exclude=node_modules ${bundledJsPath} | jq '.results | .[] | .extra.metavars."$X".abstract_content' -r | sort -u`
+    semgrepLogger(`Checking ${bundledJsPath} for ${semgrepQuery}`)
     child_process.exec(
-      `semgrep -e '${semgrepSearch}' --json --quiet --lang=js --exclude=node_modules ${bundledJsPath} | jq '.results | .[] | .extra.metavars."$X".abstract_content' -r | sort -u`,
+      semgrepQuery,
       (err, stdout, stderr) => {
         if (err) {
+          semgrepLogger('Error!!', err)
           reject(stderr);
         } else {
           const r = stdout.toString().split("\n").filter(Boolean);
+          semgrepLogger('got', r)
           resolve(r);
         }
       }
