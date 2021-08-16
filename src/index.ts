@@ -20,7 +20,7 @@ function bundleCode(outpath, ...entrypoints) {
   const entrypointStr = entrypoints.join(" ");
   genPermsLogger(entrypointStr);
   return new Promise((resolve, reject) => {
-    const cmd = `esbuild --bundle --target=es2020 --outfile=${outpath}  ${entrypointStr}`;
+    const cmd = `esbuild --bundle --platform=node --target=es2020 --outfile=${outpath}  ${entrypointStr}`;
     child_process.exec(cmd, (err, stdout, stderr) => {
       genPermsLogger(stdout);
       if (err) {
