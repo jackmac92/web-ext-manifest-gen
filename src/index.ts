@@ -155,8 +155,8 @@ const findUsedPermissionsCoreViaBundle = (bundledJsPath): Promise<any[]> => {
   return Promise.all([
     _helper('browser.$X'),
     _helper('browser.runtime.$X'),
-    _helper('lib.browser.$X'),
-    _helper('lib.browser.runtime.$X'),
+    _helper('$Y.browser.$X'),
+    _helper('$Y.browser.runtime.$X'),
   ]).then((items) => items.flatMap((e) => e));
 };
 
