@@ -24,7 +24,7 @@
   },
   "scripts": {
     "build": "pika build",
-    "test": "jest",
+    "test": "jest --passWithNoTests",
     "lint": "eslint src/**/*.js"
   },
   "dependencies": {
