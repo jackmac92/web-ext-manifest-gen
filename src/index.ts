@@ -20,7 +20,7 @@ function bundleCode(outpath, ...entrypoints) {
   const entrypointStr = entrypoints.join(" ");
   genPermsLogger(entrypointStr);
   return new Promise((resolve, reject) => {
-    const cmd = `rollup --format=es -p=commonjs -p=node-resolve -p=typescript --file=${outpath} -- ${entrypointStr}`;
+    const cmd = `esbuild --bundle --target=es2020 --outfile=${outpath}  ${entrypointStr}`;
     child_process.exec(cmd, (err, stdout, stderr) => {
       genPermsLogger(stdout);
       if (err) {
@@ -153,6 +153,8 @@ const _findUsedPermssionsSemgrepHelperViaBundle = (bundledJsPath) => (semgrepSea
 const findUsedPermissionsCoreViaBundle = (bundledJsPath): Promise<any[]> => {
   const _helper = _findUsedPermssionsSemgrepHelperViaBundle(bundledJsPath)
   return Promise.all([
+    _helper('browser.$X'),
+    _helper('browser.runtime.$X'),
     _helper('lib.browser.$X'),
     _helper('lib.browser.runtime.$X'),
   ]).then((items) => items.flatMap((e) => e));
