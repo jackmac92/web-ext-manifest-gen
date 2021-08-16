@@ -91,26 +91,25 @@ const verifyPermFinderDeps = () => {
 
 const _findUsedPermssionsSemgrepHelper =
   (entryPoint) =>
-  (semgrepSearch: string): Promise<string[]> =>
-    new Promise((resolve, reject) => {
-      const fileExt = entryPoint.split(".").reverse()[0];
-      const semgrepQuery = `semgrep -e '${semgrepSearch}' --json --quiet --lang=${fileExt} --exclude=node_modules ${entryPoint} | jq '.results | .[] | .extra.metavars."$X".abstract_content' -r`;
-      semgrepLogger(`Checking ${entryPoint} for ${semgrepQuery}`);
-      child_process.exec(semgrepQuery, (err, stdout, stderr) => {
-        if (err) {
-          semgrepLogger("Error!!", err);
-          reject(stderr);
-        } else {
-          const r = stdout.toString().split("\n").filter(Boolean);
-          semgrepLogger("got", r);
-          resolve(r);
-        }
+    (semgrepSearch: string): Promise<string[]> =>
+      new Promise((resolve, reject) => {
+        const fileExt = entryPoint.split(".").reverse()[0];
         semgrepLogger(`Treating ${entryPoint} as ${fileExt}`)
         // const semgrepQuery = `semgrep -e '${semgrepSearch}' --json --quiet --lang=${fileExt} --exclude=node_modules ${entryPoint} | jq '.results | .[] | .extra.metavars."$X".abstract_content' -r`;
         // going back to hardcode ts cuz I think this is broken
         const semgrepQuery = `semgrep -e '${semgrepSearch}' --json --quiet --lang=ts --exclude=node_modules ${entryPoint} | jq '.results | .[] | .extra.metavars."$X".abstract_content' -r`;
+        semgrepLogger(`Checking ${entryPoint} for ${semgrepQuery}`);
+        child_process.exec(semgrepQuery, (err, stdout, stderr) => {
+          if (err) {
+            semgrepLogger("Error!!", err);
+            reject(stderr);
+          } else {
+            const r = stdout.toString().split("\n").filter(Boolean);
+            semgrepLogger("got", r);
+            resolve(r);
+          }
+        });
       });
-    });
 
 function uniqify(els: string[]): string[] {
   const baseVal = new Set() as Set<string>;
@@ -288,11 +287,11 @@ type ContentScript = ExtensionManifest["content_scripts"][number];
 
 const createContentScript =
   (contentScriptsDir: string) =>
-  (s: string): ContentScripts[0] => {
-    const scriptPath = path.join(contentScriptsDir, s);
-    const matches = getUrlMatches(scriptPath);
-    return { matches, js: [`./${scriptPath}`] };
-  };
+    (s: string): ContentScripts[0] => {
+      const scriptPath = path.join(contentScriptsDir, s);
+      const matches = getUrlMatches(scriptPath);
+      return { matches, js: [`./${scriptPath}`] };
+    };
 
 const isContentScripts = (obj: unknown): obj is ContentScripts => {
   return Array.isArray(obj) && obj.every(isContentScript);
