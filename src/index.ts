@@ -126,9 +126,13 @@ const findUsedPermissionsCore = async (entrypoint): Promise<string[]> => {
     _helper("browser.$X"),
     _helper("browser.runtime.$X"),
   ]);
-  return perms
+  const flatPerms = perms
     .flatMap((e) => e)
+  genPermsLogger("flat perms", flatPerms)
+  const result = flatPerms
     .filter((p) => identifyRequiredPerms(p).length > 0);
+  genPermsLogger("final perms core", result)
+  return result
 };
 
 const _checkForBlockingWebrequestPerm = (bundledJsPath) =>
@@ -158,13 +162,17 @@ async function findUsedPermissions(entryPoint): Promise<string[]> {
     basePermList.push("webRequestBlocking");
   }
 
+
   return uniqify(basePermList);
 }
 
 const findPermissions = async (...entrypoints) => {
   verifyPermFinderDeps();
   const allPerms = await Promise.all(entrypoints.map(findUsedPermissions));
-  return allPerms.flatMap((e) => e).filter(Boolean);
+  genPermsLogger("All perms almost", allPerms)
+  const final = allPerms.flatMap((e) => e).filter(Boolean);
+  genPermsLogger("final perms", final)
+  return final
 };
 
 const findAllDependentFiles = () =>
