@@ -105,6 +105,10 @@ const _findUsedPermssionsSemgrepHelper =
           semgrepLogger("got", r);
           resolve(r);
         }
+        semgrepLogger(`Treating ${entryPoint} as ${fileExt}`)
+        // const semgrepQuery = `semgrep -e '${semgrepSearch}' --json --quiet --lang=${fileExt} --exclude=node_modules ${entryPoint} | jq '.results | .[] | .extra.metavars."$X".abstract_content' -r`;
+        // going back to hardcode ts cuz I think this is broken
+        const semgrepQuery = `semgrep -e '${semgrepSearch}' --json --quiet --lang=ts --exclude=node_modules ${entryPoint} | jq '.results | .[] | .extra.metavars."$X".abstract_content' -r`;
       });
     });
 
