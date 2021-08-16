@@ -118,7 +118,7 @@ const findUsedPermissionsCore = async (entrypoint): Promise<string[]> => {
     _helper('browser.$X'),
     _helper('browser.runtime.$X'),
   ])
-  return perms.flatMap(e => e)
+  return perms.flatMap(e => e).filter(p => identifyRequiredPerms(p).length > 0)
 };
 
 const _checkForBlockingWebrequestPerm = (bundledJsPath) =>

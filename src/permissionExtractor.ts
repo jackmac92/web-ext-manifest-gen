@@ -56,7 +56,8 @@ const ALL_PERMISSIONS = {
   webRequestBlocking: s =>
     ALL_PERMISSIONS.webRequest(s) && s.includes("'blocking'")
 };
-export default function identifyPermissionsInSource(fileContents: Buffer) {
+
+export default function identifyPermissionsInSource(fileContents: Buffer | string) {
   return Object.entries(ALL_PERMISSIONS)
     .filter(([_, permTest]) => permTest(fileContents))
     .map(([permType]) => permType);
