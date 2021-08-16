@@ -8,7 +8,7 @@ import path from "path";
 import dependencyTree from "dependency-tree";
 import appRootPath from "app-root-path";
 import pkgDir from "pkg-dir";
-import identifyRequiredPerms from "./permissionExtractor";
+import identifyRequiredPerms, { ALL_PERMISSIONS } from "./permissionExtractor";
 import { JSONSchemaForGoogleChromeExtensionManifestFiles as ExtensionManifest } from "./browser-extension-manifest";
 
 const logger = debug("web-ext-manifest-gen");
@@ -129,8 +129,9 @@ const findUsedPermissionsCore = async (entrypoint): Promise<string[]> => {
   const flatPerms = perms
     .flatMap((e) => e)
   genPermsLogger("flat perms", flatPerms)
+  const allPermsList = Object.keys(ALL_PERMISSIONS).map(a => a.toLowerCase())
   const result = flatPerms
-    .filter((p) => identifyRequiredPerms(p).length > 0);
+    .filter((p) => allPermsList.includes(p.toLowerCase()))
   genPermsLogger("final perms core", result)
   return result
 };

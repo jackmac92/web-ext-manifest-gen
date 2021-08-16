@@ -6,7 +6,7 @@ const genRegex = (perm) => {
   return new RegExp(`(chromep?|browser)[\\s\\n]*\\.[\\s\\n]*${rgxInsert}`);
 };
 
-const ALL_PERMISSIONS = {
+export const ALL_PERMISSIONS = {
   alarms: (s) => genRegex("alarms").test(s),
   bookmarks: (s) => genRegex("bookmarks").test(s),
   contentSettings: (s) => genRegex("contentSettings").test(s),
