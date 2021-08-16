@@ -1,14 +1,14 @@
 include:
-  - project: 'dropLoop/ci-templates'
+  - project: 'quickstart-templates/ci-templates'
     ref: master
     file: 'node/core.yml'
-  - project: 'dropLoop/ci-templates'
+  - project: 'quickstart-templates/ci-templates'
     ref: master
     file: 'node/pika-publish.yml'
-  - project: 'dropLoop/ci-templates'
+  - project: 'quickstart-templates/ci-templates'
     ref: master
     file: 'node/meta.yml'
-  - project: 'dropLoop/ci-templates'
+  - project: 'quickstart-templates/ci-templates'
     ref: master
     file: 'node/dependencies.yml'
 
