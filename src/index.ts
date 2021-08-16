@@ -1,5 +1,5 @@
 import fs from "fs";
-import debug from 'debug';
+import debug from "debug";
 import tmp from "tmp";
 import child_process from "child_process";
 import glob from "glob";
@@ -11,15 +11,14 @@ import pkgDir from "pkg-dir";
 import identifyRequiredPerms from "./permissionExtractor";
 import { JSONSchemaForGoogleChromeExtensionManifestFiles as ExtensionManifest } from "./browser-extension-manifest";
 
-const logger = debug('web-ext-manifest-gen')
-const genPermsLogger = logger.extend('generatePermissions')
-const semgrepLogger = genPermsLogger.extend('semgrep')
-
+const logger = debug("web-ext-manifest-gen");
+const genPermsLogger = logger.extend("generatePermissions");
+const semgrepLogger = genPermsLogger.extend("semgrep");
 
 function bundleCode(outpath, ...entrypoints) {
-  genPermsLogger('Bundling code')
-  const entrypointStr = entrypoints.join(" ")
-  genPermsLogger(entrypointStr)
+  genPermsLogger("Bundling code");
+  const entrypointStr = entrypoints.join(" ");
+  genPermsLogger(entrypointStr);
   return new Promise((resolve, reject) => {
     const cmd = `rollup --format=es -p=commonjs -p=node-resolve -p=typescript --file=${outpath} -- ${entrypointStr}`;
     child_process.exec(cmd, (err, stdout, stderr) => {
@@ -39,25 +38,33 @@ const mktemp = () =>
   new Promise((resolve, reject) => {
     tmp.file((err, path) => {
       if (err) {
-        logger('mktemp failed!!')
+        logger("mktemp failed!!");
         reject(err);
       } else {
-        logger(`temp path at ${path}`)
+        logger(`temp path at ${path}`);
         resolve(path);
       }
     });
   });
 
-const getVersionFromGitTags = () => new Promise((resolve, reject) => {
-  child_process.exec("git tag --list", (err, stdout, stderr) => {
-    if (err) {
-      reject(err)
-      return
-    }
-    const out = stdout.toString().split('\n').map(el => el.match(/([\d\.]+\d)/i)).filter(Boolean).map(reMatch => reMatch[1]).sort().reverse()[0]
-    resolve(out)
-  })
-})
+const getVersionFromGitTags = () =>
+  new Promise((resolve, reject) => {
+    child_process.exec("git tag --list", (err, stdout, stderr) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      const out = stdout
+        .toString()
+        .split("\n")
+        .map((el) => el.match(/([\d\.]+\d)/i))
+        .filter(Boolean)
+        .map((reMatch) => reMatch[1])
+        .sort()
+        .reverse()[0];
+      resolve(out);
+    });
+  });
 
 const _hasJq = () => {
   try {
@@ -82,43 +89,43 @@ const verifyPermFinderDeps = () => {
   _hasSemgrep();
 };
 
-const _findUsedPermssionsSemgrepHelper = (entryPoint) => (semgrepSearch: string): Promise<string[]> =>
-  new Promise((resolve, reject) => {
-    const fileExt = entryPoint.split('.').reverse()[0]
-    const semgrepQuery = `semgrep -e '${semgrepSearch}' --json --quiet --lang=${fileExt} --exclude=node_modules ${entryPoint} | jq '.results | .[] | .extra.metavars."$X".abstract_content' -r`
-    semgrepLogger(`Checking ${entryPoint} for ${semgrepQuery}`)
-    child_process.exec(
-      semgrepQuery,
-      (err, stdout, stderr) => {
+const _findUsedPermssionsSemgrepHelper =
+  (entryPoint) =>
+  (semgrepSearch: string): Promise<string[]> =>
+    new Promise((resolve, reject) => {
+      const fileExt = entryPoint.split(".").reverse()[0];
+      const semgrepQuery = `semgrep -e '${semgrepSearch}' --json --quiet --lang=${fileExt} --exclude=node_modules ${entryPoint} | jq '.results | .[] | .extra.metavars."$X".abstract_content' -r`;
+      semgrepLogger(`Checking ${entryPoint} for ${semgrepQuery}`);
+      child_process.exec(semgrepQuery, (err, stdout, stderr) => {
         if (err) {
-          semgrepLogger('Error!!', err)
+          semgrepLogger("Error!!", err);
           reject(stderr);
         } else {
           const r = stdout.toString().split("\n").filter(Boolean);
-          semgrepLogger('got', r)
+          semgrepLogger("got", r);
           resolve(r);
         }
-      }
-    );
-  })
-
+      });
+    });
 
 function uniqify(els: string[]): string[] {
-  const baseVal = new Set() as Set<string>
+  const baseVal = new Set() as Set<string>;
   const allItems = els.reduce<Set<string>>((acc, el) => {
     acc.add(el);
     return acc;
   }, baseVal);
-  return Array.from(allItems)
+  return Array.from(allItems);
 }
 
 const findUsedPermissionsCore = async (entrypoint): Promise<string[]> => {
-  const _helper = _findUsedPermssionsSemgrepHelper(entrypoint)
+  const _helper = _findUsedPermssionsSemgrepHelper(entrypoint);
   const perms = await Promise.all([
-    _helper('browser.$X'),
-    _helper('browser.runtime.$X'),
-  ])
-  return perms.flatMap(e => e).filter(p => identifyRequiredPerms(p).length > 0)
+    _helper("browser.$X"),
+    _helper("browser.runtime.$X"),
+  ]);
+  return perms
+    .flatMap((e) => e)
+    .filter((p) => identifyRequiredPerms(p).length > 0);
 };
 
 const _checkForBlockingWebrequestPerm = (bundledJsPath) =>
@@ -129,8 +136,10 @@ const _checkForBlockingWebrequestPerm = (bundledJsPath) =>
         if (err) {
           reject(stderr);
         } else {
-          const countFound = stdout.toString().split("\n").filter(Boolean)
-            .length;
+          const countFound = stdout
+            .toString()
+            .split("\n")
+            .filter(Boolean).length;
           resolve(countFound > 0);
         }
       }
@@ -141,18 +150,18 @@ const _checkForBlockingWebrequestPerm = (bundledJsPath) =>
   );
 
 async function findUsedPermissions(entryPoint): Promise<string[]> {
-  const basePermList = await findUsedPermissionsCore(entryPoint)
+  const basePermList = await findUsedPermissionsCore(entryPoint);
   if (await _checkForBlockingWebrequestPerm(entryPoint)) {
-    basePermList.push("webRequestBlocking")
+    basePermList.push("webRequestBlocking");
   }
 
-  return uniqify(basePermList)
+  return uniqify(basePermList);
 }
 
 const findPermissions = async (...entrypoints) => {
   verifyPermFinderDeps();
   const allPerms = await Promise.all(entrypoints.map(findUsedPermissions));
-  return allPerms.flatMap(e => e).filter(Boolean)
+  return allPerms.flatMap((e) => e).filter(Boolean);
 };
 
 const findAllDependentFiles = () =>
@@ -273,13 +282,13 @@ const getUrlMatches = (scriptPath: string): [string, ...string[]] => {
 type ContentScripts = ExtensionManifest["content_scripts"];
 type ContentScript = ExtensionManifest["content_scripts"][number];
 
-const createContentScript = (contentScriptsDir: string) => (
-  s: string
-): ContentScripts[0] => {
-  const scriptPath = path.join(contentScriptsDir, s);
-  const matches = getUrlMatches(scriptPath);
-  return { matches, js: [`./${scriptPath}`] };
-};
+const createContentScript =
+  (contentScriptsDir: string) =>
+  (s: string): ContentScripts[0] => {
+    const scriptPath = path.join(contentScriptsDir, s);
+    const matches = getUrlMatches(scriptPath);
+    return { matches, js: [`./${scriptPath}`] };
+  };
 
 const isContentScripts = (obj: unknown): obj is ContentScripts => {
   return Array.isArray(obj) && obj.every(isContentScript);
@@ -459,8 +468,11 @@ export const run = async () => {
 async function determineVersion(packageJsonVersion: any) {
   let version;
   if (process.env.CI && process.env.CI_COMMIT_NAME) {
-    version = process.env.CI_COMMIT_NAME
-  } else if (typeof packageJsonVersion === "string" && packageJsonVersion.length > 0) {
+    version = process.env.CI_COMMIT_NAME;
+  } else if (
+    typeof packageJsonVersion === "string" &&
+    packageJsonVersion.length > 0
+  ) {
     version = packageJsonVersion;
   } else {
     try {
