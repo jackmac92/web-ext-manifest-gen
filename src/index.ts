@@ -84,7 +84,8 @@ const verifyPermFinderDeps = () => {
 
 const _findUsedPermssionsSemgrepHelper = (entryPoint) => (semgrepSearch: string): Promise<string[]> =>
   new Promise((resolve, reject) => {
-    const semgrepQuery = `semgrep -e '${semgrepSearch}' --json --quiet --lang=ts --exclude=node_modules ${entryPoint} | jq '.results | .[] | .extra.metavars."$X".abstract_content' -r`
+    const fileExt = entryPoint.split('.').reverse()[0]
+    const semgrepQuery = `semgrep -e '${semgrepSearch}' --json --quiet --lang=${fileExt} --exclude=node_modules ${entryPoint} | jq '.results | .[] | .extra.metavars."$X".abstract_content' -r`
     semgrepLogger(`Checking ${entryPoint} for ${semgrepQuery}`)
     child_process.exec(
       semgrepQuery,
