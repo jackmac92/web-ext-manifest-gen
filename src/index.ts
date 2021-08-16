@@ -112,12 +112,7 @@ const _findUsedPermssionsSemgrepHelper =
       });
 
 function uniqify(els: string[]): string[] {
-  const baseVal = new Set() as Set<string>;
-  const allItems = els.reduce<Set<string>>((acc, el) => {
-    acc.add(el);
-    return acc;
-  }, baseVal);
-  return Array.from(allItems);
+  return Array.from(new Set(els))
 }
 
 const findUsedPermissionsCore = async (entrypoint): Promise<string[]> => {
@@ -134,6 +129,33 @@ const findUsedPermissionsCore = async (entrypoint): Promise<string[]> => {
     .filter((p) => allPermsList.includes(p.toLowerCase()))
   genPermsLogger("final perms core", result)
   return result
+}
+const _findUsedPermssionsSemgrepHelperViaBundle = (bundledJsPath) => (semgrepSearch: string) =>
+  new Promise((resolve, reject) => {
+    const semgrepQuery = `semgrep -e '${semgrepSearch}' --json --quiet --lang=js --exclude=node_modules ${bundledJsPath} | jq '.results | .[] | .extra.metavars."$X".abstract_content' -r | sort -u`
+    semgrepLogger(`Checking ${bundledJsPath} for ${semgrepQuery}`)
+    child_process.exec(
+      semgrepQuery,
+      (err, stdout, stderr) => {
+        if (err) {
+          semgrepLogger('Error!!', err)
+          reject(stderr);
+        } else {
+          const r = stdout.toString().split("\n").filter(Boolean);
+          semgrepLogger('got', r)
+          resolve(r);
+        }
+      }
+    );
+  })
+
+
+const findUsedPermissionsCoreViaBundle = (bundledJsPath): Promise<any[]> => {
+  const _helper = _findUsedPermssionsSemgrepHelperViaBundle(bundledJsPath)
+  return Promise.all([
+    _helper('lib.browser.$X'),
+    _helper('lib.browser.runtime.$X'),
+  ]).then((items) => items.flatMap((e) => e));
 };
 
 const _checkForBlockingWebrequestPerm = (bundledJsPath) =>
@@ -174,8 +196,22 @@ const findPermissions = async (...entrypoints) => {
   const final = allPerms.flatMap((e) => e).filter(Boolean);
   genPermsLogger("final perms", final)
   return final
-};
+}
 
+const findUsedPermissionsViaBundle = async (bundledJsPath) =>
+  [
+    ...(await findUsedPermissionsCoreViaBundle(bundledJsPath)),
+    (await _checkForBlockingWebrequestPerm(bundledJsPath))
+      ? "webRequestBlocking"
+      : null,
+  ].filter(Boolean);
+
+const findPermissionsViaBundle = async (...entrypoints) => {
+  verifyPermFinderDeps();
+  const bundledJsPath = await mktemp();
+  await bundleCode(bundledJsPath, ...entrypoints);
+  return findUsedPermissionsViaBundle(bundledJsPath);
+};
 const findAllDependentFiles = () =>
   new Promise((resolve, reject) => {
     glob("./**/*.*s", (err, files) => {
@@ -455,7 +491,7 @@ export const run = async () => {
     }
 
     // entrypoints = entrypoints.map(e => path.join(directory, e))
-    const discoveredPerms = await findPermissions(...entrypoints);
+    const discoveredPerms = await findPermissionsViaBundle(...entrypoints);
     manifest.permissions.push(...discoveredPerms);
   }
 
