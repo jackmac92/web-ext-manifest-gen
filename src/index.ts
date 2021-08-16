@@ -9,6 +9,9 @@ module.exports.main = main
 
 function getArgs(argv) {
   const args = require('yargs')
+    .completion('completion', (_current, _argv, done) => {
+      return Promise.resolve(['hello', 'world']).then(done)
+    })
     .command('execute [action]', 'execute specified action', yargs => {
       yargs.positional('action', {
         describe: 'cli action',
