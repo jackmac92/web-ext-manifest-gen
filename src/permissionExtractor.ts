@@ -48,6 +48,7 @@ export const ALL_PERMISSIONS = {
   storage: (s) => genRegex("storage").test(s),
   tabCapture: (s) => genRegex("tabCapture").test(s),
   // tabs: s => /(chromep?|browser)[\s\n]*\.[\s\n]*tabs/.test(s),
+  tabs: () => false, // workaround so the key is present
   topSites: (s) => genRegex("topSites").test(s),
   tts: (s) => genRegex("tts").test(s),
   ttsEngine: (s) => genRegex("ttsEngine").test(s),
