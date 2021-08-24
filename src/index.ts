@@ -7,9 +7,11 @@ import write from "write";
 import path from "path";
 import dependencyTree from "dependency-tree";
 import appRootPath from "app-root-path";
+import swc from "@swc/core";
 import pkgDir from "pkg-dir";
 import identifyRequiredPerms, { ALL_PERMISSIONS } from "./permissionExtractor";
 import { JSONSchemaForGoogleChromeExtensionManifestFiles as ExtensionManifest } from "./browser-extension-manifest";
+import { BundleInput, BundleOptions } from "@swc/core/spack";
 
 const logger = debug("web-ext-manifest-gen");
 const genPermsLogger = logger.extend("generatePermissions");
@@ -32,6 +34,38 @@ function bundleCode(outpath, ...entrypoints) {
       }
     });
   });
+}
+
+function bundleCodeSwc(outpath, ...entryPoints) {
+  process.exit(1)
+  const bundleInput: BundleOptions = {
+    entry: entryPoints, output: { name: 'tmp-bundle', path: outpath }, module: { type: 'commonjs' }, options: {
+      jsc: {
+        parser: {
+          "syntax": "typescript",
+          "tsx": true,
+          "decorators": true,
+          "dynamicImport": true
+        }
+      }
+    }
+  }
+  return swc.bundle(bundleInput)
+    .then((bundleResultsMap) => {
+      const bundleResults = Object.entries(bundleResultsMap)
+      if (bundleResults.length > 1) {
+        throw Error('too many bundles')
+      }
+      new Promise((resolve, reject) => {
+        fs.writeFile(bundleResults[0][0], bundleResults[0][1].code, (err) => {
+          if (err) {
+            reject(err)
+          } else {
+            resolve(void 0);
+          }
+        });
+      }) // transformed code
+    })
 }
 
 const mktemp = () =>
