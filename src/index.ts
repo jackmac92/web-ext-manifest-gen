@@ -89,30 +89,30 @@ const verifyPermFinderDeps = () => {
   _hasSemgrep();
 };
 
-const _findUsedPermssionsSemgrepHelper =
-  (entryPoint) =>
-    (semgrepSearch: string): Promise<string[]> =>
-      new Promise((resolve, reject) => {
-        const fileExt = entryPoint.split(".").reverse()[0];
-        semgrepLogger(`Treating ${entryPoint} as ${fileExt}`)
-        // const semgrepQuery = `semgrep -e '${semgrepSearch}' --json --quiet --lang=${fileExt} --exclude=node_modules ${entryPoint} | jq '.results | .[] | .extra.metavars."$X".abstract_content' -r`;
-        // going back to hardcode ts cuz I think this is broken
-        const semgrepQuery = `semgrep -e '${semgrepSearch}' --json --quiet --lang=ts --exclude=node_modules ${entryPoint} | jq '.results | .[] | .extra.metavars."$X".abstract_content' -r`;
-        semgrepLogger(`Checking ${entryPoint} for ${semgrepQuery}`);
-        child_process.exec(semgrepQuery, (err, stdout, stderr) => {
-          if (err) {
-            semgrepLogger("Error!!", err);
-            reject(stderr);
-          } else {
-            const r = stdout.toString().split("\n").filter(Boolean);
-            semgrepLogger("got", r);
-            resolve(r);
-          }
-        });
-      });
+const _findUsedPermssionsSemgrepHelper = (entryPoint) => (
+  semgrepSearch: string
+): Promise<string[]> =>
+  new Promise((resolve, reject) => {
+    const fileExt = entryPoint.split(".").reverse()[0];
+    semgrepLogger(`Treating ${entryPoint} as ${fileExt}`);
+    // const semgrepQuery = `semgrep -e '${semgrepSearch}' --json --quiet --lang=${fileExt} --exclude=node_modules ${entryPoint} | jq '.results | .[] | .extra.metavars."$X".abstract_content' -r`;
+    // going back to hardcode ts cuz I think this is broken
+    const semgrepQuery = `semgrep -e '${semgrepSearch}' --json --quiet --lang=ts --exclude=node_modules ${entryPoint} | jq '.results | .[] | .extra.metavars."$X".abstract_content' -r`;
+    semgrepLogger(`Checking ${entryPoint} for ${semgrepQuery}`);
+    child_process.exec(semgrepQuery, (err, stdout, stderr) => {
+      if (err) {
+        semgrepLogger("Error!!", err);
+        reject(stderr);
+      } else {
+        const r = stdout.toString().split("\n").filter(Boolean);
+        semgrepLogger("got", r);
+        resolve(r);
+      }
+    });
+  });
 
 function uniqify(els: string[]): string[] {
-  return Array.from(new Set(els))
+  return Array.from(new Set(els));
 }
 
 const findUsedPermissionsCore = async (entrypoint): Promise<string[]> => {
@@ -121,42 +121,40 @@ const findUsedPermissionsCore = async (entrypoint): Promise<string[]> => {
     _helper("browser.$X"),
     _helper("browser.runtime.$X"),
   ]);
-  const flatPerms = perms
-    .flatMap((e) => e)
-  genPermsLogger("flat perms", flatPerms)
-  const allPermsList = Object.keys(ALL_PERMISSIONS).map(a => a.toLowerCase())
-  const result = flatPerms
-    .filter((p) => allPermsList.includes(p.toLowerCase()))
-  genPermsLogger("final perms core", result)
-  return result
-}
-const _findUsedPermssionsSemgrepHelperViaBundle = (bundledJsPath) => (semgrepSearch: string) =>
+  const flatPerms = perms.flatMap((e) => e);
+  genPermsLogger("flat perms", flatPerms);
+  const allPermsList = Object.keys(ALL_PERMISSIONS).map((a) => a.toLowerCase());
+  const result = flatPerms.filter((p) =>
+    allPermsList.includes(p.toLowerCase())
+  );
+  genPermsLogger("final perms core", result);
+  return result;
+};
+const _findUsedPermssionsSemgrepHelperViaBundle = (bundledJsPath) => (
+  semgrepSearch: string
+) =>
   new Promise((resolve, reject) => {
-    const semgrepQuery = `semgrep -e '${semgrepSearch}' --json --quiet --lang=js --exclude=node_modules ${bundledJsPath} | jq '.results | .[] | .extra.metavars."$X".abstract_content' -r | sort -u`
-    semgrepLogger(`Checking ${bundledJsPath} for ${semgrepQuery}`)
-    child_process.exec(
-      semgrepQuery,
-      (err, stdout, stderr) => {
-        if (err) {
-          semgrepLogger('Error!!', err)
-          reject(stderr);
-        } else {
-          const r = stdout.toString().split("\n").filter(Boolean);
-          semgrepLogger('got', r)
-          resolve(r);
-        }
+    const semgrepQuery = `semgrep -e '${semgrepSearch}' --json --quiet --lang=js --exclude=node_modules ${bundledJsPath} | jq '.results | .[] | .extra.metavars."$X".abstract_content' -r | sort -u`;
+    semgrepLogger(`Checking ${bundledJsPath} for ${semgrepQuery}`);
+    child_process.exec(semgrepQuery, (err, stdout, stderr) => {
+      if (err) {
+        semgrepLogger("Error!!", err);
+        reject(stderr);
+      } else {
+        const r = stdout.toString().split("\n").filter(Boolean);
+        semgrepLogger("got", r);
+        resolve(r);
       }
-    );
-  })
-
+    });
+  });
 
 const findUsedPermissionsCoreViaBundle = (bundledJsPath): Promise<any[]> => {
-  const _helper = _findUsedPermssionsSemgrepHelperViaBundle(bundledJsPath)
+  const _helper = _findUsedPermssionsSemgrepHelperViaBundle(bundledJsPath);
   return Promise.all([
-    _helper('browser.$X'),
-    _helper('browser.runtime.$X'),
-    _helper('$Y.browser.$X'),
-    _helper('$Y.browser.runtime.$X'),
+    _helper("browser.$X"),
+    _helper("browser.runtime.$X"),
+    _helper("$Y.browser.$X"),
+    _helper("$Y.browser.runtime.$X"),
   ]).then((items) => items.flatMap((e) => e));
 };
 
@@ -168,10 +166,8 @@ const _checkForBlockingWebrequestPerm = (bundledJsPath) =>
         if (err) {
           reject(stderr);
         } else {
-          const countFound = stdout
-            .toString()
-            .split("\n")
-            .filter(Boolean).length;
+          const countFound = stdout.toString().split("\n").filter(Boolean)
+            .length;
           resolve(countFound > 0);
         }
       }
@@ -187,18 +183,17 @@ async function findUsedPermissions(entryPoint): Promise<string[]> {
     basePermList.push("webRequestBlocking");
   }
 
-
   return uniqify(basePermList);
 }
 
 const findPermissions = async (...entrypoints) => {
   verifyPermFinderDeps();
   const allPerms = await Promise.all(entrypoints.map(findUsedPermissions));
-  genPermsLogger("All perms almost", allPerms)
+  genPermsLogger("All perms almost", allPerms);
   const final = allPerms.flatMap((e) => e).filter(Boolean);
-  genPermsLogger("final perms", final)
-  return final
-}
+  genPermsLogger("final perms", final);
+  return final;
+};
 
 const findUsedPermissionsViaBundle = async (bundledJsPath) =>
   [
@@ -211,7 +206,7 @@ const findUsedPermissionsViaBundle = async (bundledJsPath) =>
 const findPermissionsViaBundle = async (...entrypoints) => {
   verifyPermFinderDeps();
   const bundledJsPath = await mktemp();
-  await bundleCode(bundledJsPath, ...entrypoints);
+  await bundleCodeSwc(bundledJsPath, ...entrypoints);
   return findUsedPermissionsViaBundle(bundledJsPath);
 };
 const findAllDependentFiles = () =>
@@ -332,13 +327,13 @@ const getUrlMatches = (scriptPath: string): [string, ...string[]] => {
 type ContentScripts = ExtensionManifest["content_scripts"];
 type ContentScript = ExtensionManifest["content_scripts"][number];
 
-const createContentScript =
-  (contentScriptsDir: string) =>
-    (s: string): ContentScripts[0] => {
-      const scriptPath = path.join(contentScriptsDir, s);
-      const matches = getUrlMatches(scriptPath);
-      return { matches, js: [`./${scriptPath}`] };
-    };
+const createContentScript = (contentScriptsDir: string) => (
+  s: string
+): ContentScripts[0] => {
+  const scriptPath = path.join(contentScriptsDir, s);
+  const matches = getUrlMatches(scriptPath);
+  return { matches, js: [`./${scriptPath}`] };
+};
 
 const isContentScripts = (obj: unknown): obj is ContentScripts => {
   return Array.isArray(obj) && obj.every(isContentScript);
