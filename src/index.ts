@@ -35,8 +35,26 @@ function bundleCode(outpath, ...entrypoints) {
     });
   });
 }
+function bundleCodeSwc(outpath, ...entrypoints) {
+  genPermsLogger("Bundling code");
+  const entrypointStr = entrypoints.join(" ");
+  genPermsLogger(entrypointStr);
+  return new Promise((resolve, reject) => {
+    const cmd = `swc ${entrypointStr} -o ${outpath}`;
+    child_process.exec(cmd, (err, stdout, stderr) => {
+      genPermsLogger(stdout);
+      if (err) {
+        genPermsLogger("Code bundle failed!");
+        genPermsLogger(stderr);
+        reject(err);
+      } else {
+        resolve(void 0);
+      }
+    });
+  });
+}
 
-function bundleCodeSwc(outpath, ...entryPoints) {
+function bundleCodeSwcViaApi(outpath, ...entryPoints) {
   process.exit(1)
   const bundleInput: BundleOptions = {
     entry: entryPoints, output: { name: 'tmp-bundle', path: outpath }, module: { type: 'commonjs' }, options: {

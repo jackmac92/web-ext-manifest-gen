@@ -28,6 +28,7 @@
     "lint": "eslint src/**/*.ts"
   },
   "dependencies": {
+    "@swc/core": "^1.2.80",
     "app-root-path": "^3.0.0",
     "debug": "^4.3.2",
     "dependency-tree": "^8.1.1",
