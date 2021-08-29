@@ -40,8 +40,18 @@ function bundleCodeSwc(outpath, ...entrypoints) {
   const entrypointStr = entrypoints.join(" ");
   genPermsLogger(entrypointStr);
   return new Promise((resolve, reject) => {
-    const cmd = `swc ${entrypointStr} -o ${outpath}`;
+    const cmd = 'npx spack';
+    const spackConf = {
+      entry: {
+        ...entrypoints
+      },
+      output: {
+        path: outpath
+      }
+    }
+    fs.writeFileSync('spack.config.js', `module.exports = ${JSON.stringify(spackConf)}`)
     child_process.exec(cmd, (err, stdout, stderr) => {
+      fs.unlinkSync('spack.config.js');
       genPermsLogger(stdout);
       if (err) {
         genPermsLogger("Code bundle failed!");
