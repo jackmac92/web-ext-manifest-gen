@@ -18,7 +18,7 @@ const genPermsLogger = logger.extend("generatePermissions");
 const semgrepLogger = genPermsLogger.extend("semgrep");
 
 function bundleCode(outpath, ...entrypoints) {
-  genPermsLogger("Bundling code");
+  genPermsLogger("esbuild Bundling code");
   const entrypointStr = entrypoints.join(" ");
   genPermsLogger(entrypointStr);
   return new Promise((resolve, reject) => {
@@ -36,25 +36,27 @@ function bundleCode(outpath, ...entrypoints) {
   });
 }
 function bundleCodeSwc(outpath, ...entrypoints) {
-  genPermsLogger("Bundling code");
+  genPermsLogger("Swc Bundling code");
   const entrypointStr = entrypoints.join(" ");
   genPermsLogger(entrypointStr);
   return new Promise((resolve, reject) => {
-    const cmd = 'npx spack';
+    const cmd = "npx spack";
     const spackConf = {
       entry: {
-        ...entrypoints
+        ...entrypoints,
       },
       output: {
-        path: outpath
-      }
-    }
-    fs.writeFileSync('spack.config.js', `module.exports = ${JSON.stringify(spackConf)}`)
+        path: outpath,
+      },
+    };
+    fs.writeFileSync(
+      "spack.config.js",
+      `module.exports = ${JSON.stringify(spackConf)}`
+    );
     child_process.exec(cmd, (err, stdout, stderr) => {
-      fs.unlinkSync('spack.config.js');
       genPermsLogger(stdout);
       if (err) {
-        genPermsLogger("Code bundle failed!");
+        genPermsLogger("Swc code bundle failed!");
         genPermsLogger(stderr);
         reject(err);
       } else {
@@ -65,35 +67,37 @@ function bundleCodeSwc(outpath, ...entrypoints) {
 }
 
 function bundleCodeSwcViaApi(outpath, ...entryPoints) {
-  process.exit(1)
+  process.exit(1);
   const bundleInput: BundleOptions = {
-    entry: entryPoints, output: { name: 'tmp-bundle', path: outpath }, module: { type: 'commonjs' }, options: {
+    entry: entryPoints,
+    output: { name: "tmp-bundle", path: outpath },
+    module: { type: "commonjs" },
+    options: {
       jsc: {
         parser: {
-          "syntax": "typescript",
-          "tsx": true,
-          "decorators": true,
-          "dynamicImport": true
-        }
-      }
+          syntax: "typescript",
+          tsx: true,
+          decorators: true,
+          dynamicImport: true,
+        },
+      },
+    },
+  };
+  return swc.bundle(bundleInput).then((bundleResultsMap) => {
+    const bundleResults = Object.entries(bundleResultsMap);
+    if (bundleResults.length > 1) {
+      throw Error("too many bundles");
     }
-  }
-  return swc.bundle(bundleInput)
-    .then((bundleResultsMap) => {
-      const bundleResults = Object.entries(bundleResultsMap)
-      if (bundleResults.length > 1) {
-        throw Error('too many bundles')
-      }
-      new Promise((resolve, reject) => {
-        fs.writeFile(bundleResults[0][0], bundleResults[0][1].code, (err) => {
-          if (err) {
-            reject(err)
-          } else {
-            resolve(void 0);
-          }
-        });
-      }) // transformed code
-    })
+    new Promise((resolve, reject) => {
+      fs.writeFile(bundleResults[0][0], bundleResults[0][1].code, (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(void 0);
+        }
+      });
+    }); // transformed code
+  });
 }
 
 const mktemp = () =>
@@ -151,27 +155,27 @@ const verifyPermFinderDeps = () => {
   _hasSemgrep();
 };
 
-const _findUsedPermssionsSemgrepHelper = (entryPoint) => (
-  semgrepSearch: string
-): Promise<string[]> =>
-  new Promise((resolve, reject) => {
-    const fileExt = entryPoint.split(".").reverse()[0];
-    semgrepLogger(`Treating ${entryPoint} as ${fileExt}`);
-    // const semgrepQuery = `semgrep -e '${semgrepSearch}' --json --quiet --lang=${fileExt} --exclude=node_modules ${entryPoint} | jq '.results | .[] | .extra.metavars."$X".abstract_content' -r`;
-    // going back to hardcode ts cuz I think this is broken
-    const semgrepQuery = `semgrep -e '${semgrepSearch}' --json --quiet --lang=ts --exclude=node_modules ${entryPoint} | jq '.results | .[] | .extra.metavars."$X".abstract_content' -r`;
-    semgrepLogger(`Checking ${entryPoint} for ${semgrepQuery}`);
-    child_process.exec(semgrepQuery, (err, stdout, stderr) => {
-      if (err) {
-        semgrepLogger("Error!!", err);
-        reject(stderr);
-      } else {
-        const r = stdout.toString().split("\n").filter(Boolean);
-        semgrepLogger("got", r);
-        resolve(r);
-      }
+const _findUsedPermssionsSemgrepHelper =
+  (entryPoint) =>
+  (semgrepSearch: string): Promise<string[]> =>
+    new Promise((resolve, reject) => {
+      const fileExt = entryPoint.split(".").reverse()[0];
+      semgrepLogger(`Treating ${entryPoint} as ${fileExt}`);
+      // const semgrepQuery = `semgrep -e '${semgrepSearch}' --json --quiet --lang=${fileExt} --exclude=node_modules ${entryPoint} | jq '.results | .[] | .extra.metavars."$X".abstract_content' -r`;
+      // going back to hardcode ts cuz I think this is broken
+      const semgrepQuery = `semgrep -e '${semgrepSearch}' --json --quiet --lang=ts --exclude=node_modules ${entryPoint} | jq '.results | .[] | .extra.metavars."$X".abstract_content' -r`;
+      semgrepLogger(`Checking ${entryPoint} for ${semgrepQuery}`);
+      child_process.exec(semgrepQuery, (err, stdout, stderr) => {
+        if (err) {
+          semgrepLogger("Error!!", err);
+          reject(stderr);
+        } else {
+          const r = stdout.toString().split("\n").filter(Boolean);
+          semgrepLogger("got", r);
+          resolve(r);
+        }
+      });
     });
-  });
 
 function uniqify(els: string[]): string[] {
   return Array.from(new Set(els));
@@ -192,23 +196,22 @@ const findUsedPermissionsCore = async (entrypoint): Promise<string[]> => {
   genPermsLogger("final perms core", result);
   return result;
 };
-const _findUsedPermssionsSemgrepHelperViaBundle = (bundledJsPath) => (
-  semgrepSearch: string
-) =>
-  new Promise((resolve, reject) => {
-    const semgrepQuery = `semgrep -e '${semgrepSearch}' --json --quiet --lang=js --exclude=node_modules ${bundledJsPath} | jq '.results | .[] | .extra.metavars."$X".abstract_content' -r | sort -u`;
-    semgrepLogger(`Checking ${bundledJsPath} for ${semgrepQuery}`);
-    child_process.exec(semgrepQuery, (err, stdout, stderr) => {
-      if (err) {
-        semgrepLogger("Error!!", err);
-        reject(stderr);
-      } else {
-        const r = stdout.toString().split("\n").filter(Boolean);
-        semgrepLogger("got", r);
-        resolve(r);
-      }
+const _findUsedPermssionsSemgrepHelperViaBundle =
+  (bundledJsPath) => (semgrepSearch: string) =>
+    new Promise((resolve, reject) => {
+      const semgrepQuery = `semgrep -e '${semgrepSearch}' --json --quiet --lang=js --exclude=node_modules ${bundledJsPath} | jq '.results | .[] | .extra.metavars."$X".abstract_content' -r | sort -u`;
+      semgrepLogger(`Checking ${bundledJsPath} for ${semgrepQuery}`);
+      child_process.exec(semgrepQuery, (err, stdout, stderr) => {
+        if (err) {
+          semgrepLogger("Error!!", err);
+          reject(stderr);
+        } else {
+          const r = stdout.toString().split("\n").filter(Boolean);
+          semgrepLogger("got", r);
+          resolve(r);
+        }
+      });
     });
-  });
 
 const findUsedPermissionsCoreViaBundle = (bundledJsPath): Promise<any[]> => {
   const _helper = _findUsedPermssionsSemgrepHelperViaBundle(bundledJsPath);
@@ -228,8 +231,10 @@ const _checkForBlockingWebrequestPerm = (bundledJsPath) =>
         if (err) {
           reject(stderr);
         } else {
-          const countFound = stdout.toString().split("\n").filter(Boolean)
-            .length;
+          const countFound = stdout
+            .toString()
+            .split("\n")
+            .filter(Boolean).length;
           resolve(countFound > 0);
         }
       }
@@ -267,7 +272,9 @@ const findUsedPermissionsViaBundle = async (bundledJsPath) =>
 
 const findPermissionsViaBundle = async (...entrypoints) => {
   verifyPermFinderDeps();
+
   const bundledJsPath = await mktemp();
+  genPermsLogger(`Bundling code in ${bundledJsPath}`);
   await bundleCodeSwc(bundledJsPath, ...entrypoints);
   return findUsedPermissionsViaBundle(bundledJsPath);
 };
@@ -389,13 +396,13 @@ const getUrlMatches = (scriptPath: string): [string, ...string[]] => {
 type ContentScripts = ExtensionManifest["content_scripts"];
 type ContentScript = ExtensionManifest["content_scripts"][number];
 
-const createContentScript = (contentScriptsDir: string) => (
-  s: string
-): ContentScripts[0] => {
-  const scriptPath = path.join(contentScriptsDir, s);
-  const matches = getUrlMatches(scriptPath);
-  return { matches, js: [`./${scriptPath}`] };
-};
+const createContentScript =
+  (contentScriptsDir: string) =>
+  (s: string): ContentScripts[0] => {
+    const scriptPath = path.join(contentScriptsDir, s);
+    const matches = getUrlMatches(scriptPath);
+    return { matches, js: [`./${scriptPath}`] };
+  };
 
 const isContentScripts = (obj: unknown): obj is ContentScripts => {
   return Array.isArray(obj) && obj.every(isContentScript);
