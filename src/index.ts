@@ -17,12 +17,31 @@ const logger = debug("web-ext-manifest-gen");
 const genPermsLogger = logger.extend("generatePermissions");
 const semgrepLogger = genPermsLogger.extend("semgrep");
 
+function bundleCodeRollup(outpath, ...entrypoints) {
+  genPermsLogger("Bundling code");
+  const entrypointStr = entrypoints.join(" ");
+  genPermsLogger(entrypointStr);
+  return new Promise((resolve, reject) => {
+    const cmd = `rollup --format=es -p=commonjs -p=node-resolve -p=typescript --file=${outpath} -- ${entrypointStr}`;
+    child_process.exec(cmd, (err, stdout, stderr) => {
+      genPermsLogger(stdout);
+      if (err) {
+        genPermsLogger("Code bundle failed!");
+        genPermsLogger(stderr);
+        reject(err);
+      } else {
+        resolve(void 0);
+      }
+    });
+  });
+}
+
 function bundleCode(outpath, ...entrypoints) {
   genPermsLogger("esbuild Bundling code");
   const entrypointStr = entrypoints.join(" ");
   genPermsLogger(entrypointStr);
   return new Promise((resolve, reject) => {
-    const cmd = `esbuild --bundle --platform=node --target=es2020 --outfile=${outpath}  ${entrypointStr}`;
+    const cmd = `esbuild --tree-shaking=true --bundle --platform=node --target=es2020 --outfile=${outpath}  ${entrypointStr}`;
     child_process.exec(cmd, (err, stdout, stderr) => {
       genPermsLogger(stdout);
       if (err) {
@@ -217,6 +236,7 @@ const findUsedPermissionsCoreViaBundle = (bundledJsPath): Promise<any[]> => {
   const _helper = _findUsedPermssionsSemgrepHelperViaBundle(bundledJsPath);
   return Promise.all([
     _helper("browser.$X"),
+    _helper("browser$1.$X"), // also checking with $1, because rollup seems to add that, and semgrep can't figure it out otherwise
     _helper("browser.runtime.$X"),
     _helper("$Y.browser.$X"),
     _helper("$Y.browser.runtime.$X"),
@@ -275,7 +295,7 @@ const findPermissionsViaBundle = async (...entrypoints) => {
 
   const bundledJsPath = await mktemp();
   genPermsLogger(`Bundling code in ${bundledJsPath}`);
-  await bundleCodeSwc(bundledJsPath, ...entrypoints);
+  await bundleCodeRollup(bundledJsPath, ...entrypoints);
   return findUsedPermissionsViaBundle(bundledJsPath);
 };
 const findAllDependentFiles = () =>
